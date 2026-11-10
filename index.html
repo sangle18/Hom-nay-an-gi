@@ -5,7 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <!-- Bảo mật: chỉ cho phép tải code/style từ chính trang này (+ font Google) -->
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self' https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://firestore.googleapis.com; manifest-src 'self'; worker-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
-  <meta name="referrer" content="no-referrer">
+  <!-- strict-origin: chỉ gửi tên miền (không gửi đường dẫn) — cần để Google kiểm tra API key giới hạn theo website -->
+  <meta name="referrer" content="strict-origin">
   <title>Hôm nay ăn gì?</title>
   <meta name="description" content="Chọn món ăn mỗi bữa cho hai vợ chồng.">
   <meta name="theme-color" content="#f76b1c">

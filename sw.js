@@ -1,6 +1,6 @@
 // Service worker: cache file để app mở được khi offline.
 // Đổi VERSION mỗi lần cập nhật code để điện thoại tải bản mới.
-const VERSION = "v9";
+const VERSION = "v10";
 const FILES = ["./", "index.html", "style.css", "data.js", "places.js", "sync-config.js", "app.js", "sync.js", "manifest.webmanifest", "icon.svg", "icon-512.png"];
 
 self.addEventListener("install", (e) => {

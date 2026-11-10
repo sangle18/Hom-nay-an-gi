@@ -67,5 +67,6 @@ Cách gộp khi 2 máy cùng sửa: món ăn lấy bản sửa sau; món đã xo
 - Link quán chỉ nhận `https://`, mở tab mới với `rel="noopener noreferrer"`.
 - Không dùng `innerHTML` với dữ liệu người dùng — mọi text đi qua `textContent`, nên tên món chứa mã HTML/JS chỉ hiện ra như chữ thường.
 - Dữ liệu đọc từ localStorage được kiểm tra/làm sạch (giới hạn độ dài, kiểu, giá trị hợp lệ) trước khi dùng.
-- `Referrer-Policy: no-referrer`; service worker chỉ cache file cùng nguồn.
+- `Referrer-Policy: strict-origin`: chỉ gửi tên miền (không gửi đường dẫn), cần để API key giới hạn theo website hoạt động; các link ra ngoài vẫn dùng `rel="noopener noreferrer"`. Service worker chỉ cache file cùng nguồn.
+- API key Firebase chỉ dùng được từ `https://sangle18.github.io/*` và `http://localhost:5173/*`.
 - Giới hạn: GitHub Pages không cho đặt HTTP header, nên không có `frame-ancestors`/`X-Frame-Options` (trang có thể bị nhúng iframe). Rủi ro thấp vì app không có thao tác nhạy cảm.
