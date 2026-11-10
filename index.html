@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <!-- Bảo mật: chỉ cho phép tải code/style từ chính trang này (+ font Google) -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self'; manifest-src 'self'; worker-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
+  <meta name="referrer" content="no-referrer">
+  <title>Hôm nay ăn gì?</title>
+  <meta name="description" content="Chọn món ăn mỗi bữa cho hai vợ chồng.">
+  <meta name="theme-color" content="#f76b1c">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Ăn gì?">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="icon-512.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;800&display=swap">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="hero">
+    <div class="hero-top">
+      <div>
+        <p class="today" id="today"></p>
+        <h1>Hôm nay ăn gì?</h1>
+      </div>
+      <img src="icon.svg" alt="" class="logo" width="48" height="48">
+    </div>
+    <div class="seg seg-glass" id="who" role="group" aria-label="Ai ăn">
+      <button type="button" data-v="both">👫 Cả hai</button>
+      <button type="button" data-v="vo">👩 Vợ</button>
+      <button type="button" data-v="chong">👨 Chồng</button>
+    </div>
+  </header>
+
+  <main>
+    <!-- ============ Tab: Hôm nay ============ -->
+    <section id="tab-pick" class="tab active" aria-label="Chọn món">
+      <div class="card">
+        <span class="label">Bữa nào?</span>
+        <div class="seg" id="meal" role="group" aria-label="Bữa">
+          <button type="button" data-v="sang">🌅 Sáng</button>
+          <button type="button" data-v="trua">☀️ Trưa</button>
+          <button type="button" data-v="toi">🌙 Tối</button>
+        </div>
+        <span class="label">Loại món <em>(không chọn = tất cả)</em></span>
+        <div class="chips" id="types"></div>
+      </div>
+
+      <button type="button" id="spin" class="btn big">🎲 Chọn giùm đi!</button>
+
+      <div class="card dish-card" id="result" aria-live="polite">
+        <div class="plate"><span id="r-icon">🍽️</span></div>
+        <p class="eyebrow" id="r-type">Bấm nút bên dưới để chọn món</p>
+        <h2 class="dish-name" id="r-name">Ăn gì đây ta?</h2>
+        <p class="likes" id="r-likes"></p>
+        <div class="row hidden" id="r-actions">
+          <button type="button" id="reroll" class="btn ghost">🔄 Đổi món</button>
+          <button type="button" id="accept" class="btn primary">✅ Chốt món</button>
+        </div>
+      </div>
+
+      <button type="button" id="discover" class="btn outline">✨ Gợi ý món khác <small>(ngoài danh sách)</small></button>
+
+      <div class="card dish-card discover hidden" id="discover-card" aria-live="polite">
+        <span class="badge">Món mới</span>
+        <div class="plate small"><span id="d-icon"></span></div>
+        <p class="eyebrow" id="d-type"></p>
+        <h2 class="dish-name" id="d-name"></h2>
+        <p class="desc" id="d-desc"></p>
+        <p class="likes" id="d-likes"></p>
+        <div class="row">
+          <button type="button" id="d-next" class="btn ghost">🔄 Món khác</button>
+          <button type="button" id="d-add" class="btn primary">➕ Thêm món</button>
+        </div>
+      </div>
+      <p class="toast" id="hint" role="status"></p>
+    </section>
+
+    <!-- ============ Tab: Thực đơn ============ -->
+    <section id="tab-plan" class="tab" aria-label="Thực đơn">
+      <div class="card">
+        <span class="label">Lên thực đơn cho</span>
+        <div class="seg" id="period" role="group" aria-label="Khoảng thời gian">
+          <button type="button" data-v="day">Ngày</button>
+          <button type="button" data-v="week">Tuần</button>
+          <button type="button" data-v="month">Tháng</button>
+          <button type="button" data-v="year">Năm</button>
+        </div>
+        <button type="button" id="plan-gen" class="btn primary wide">🎲 Tạo thực đơn mới</button>
+        <p class="note" id="plan-info"></p>
+      </div>
+      <div id="plan"></div>
+    </section>
+
+    <!-- ============ Tab: Danh sách ============ -->
+    <section id="tab-list" class="tab" aria-label="Danh sách món">
+      <div class="card">
+        <form id="add-form" class="add" autocomplete="off">
+          <input id="add-name" placeholder="Thêm món mới…" maxlength="60" required aria-label="Tên món">
+          <select id="add-type" aria-label="Loại món"></select>
+          <button class="btn primary">Thêm</button>
+        </form>
+        <p class="note">Chạm 👩 / 👨 để đổi mức thích: ❤️ thích · 🙂 ăn được · 🚫 không ăn</p>
+      </div>
+      <div id="list"></div>
+      <button type="button" id="reset" class="btn link">Khôi phục danh sách mặc định</button>
+    </section>
+
+    <!-- ============ Tab: Đã ăn ============ -->
+    <section id="tab-history" class="tab" aria-label="Lịch sử">
+      <div id="stats"></div>
+      <div id="history"></div>
+      <button type="button" id="clear-history" class="btn link">Xoá lịch sử</button>
+    </section>
+  </main>
+
+  <nav aria-label="Điều hướng">
+    <button type="button" data-tab="pick" class="on"><b>🎲</b><span>Hôm nay</span></button>
+    <button type="button" data-tab="plan"><b>📅</b><span>Thực đơn</span></button>
+    <button type="button" data-tab="list"><b>📋</b><span>Danh sách</span></button>
+    <button type="button" data-tab="history"><b>🕘</b><span>Đã ăn</span></button>
+  </nav>
+
+  <script src="data.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
