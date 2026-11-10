@@ -319,7 +319,57 @@ function addDiscover() {
 // =====================================================================
 // Quán ăn (places.js) — link Google Maps tạo từ tên + địa chỉ
 // =====================================================================
-const placeState = { types: new Set(), parking: false, q: "" };
+const placeState = { types: new Set(), parking: false, q: "", radius: 0 };
+
+// ---------- Khu nhà & khoảng cách ----------
+// Vị trí nhà chỉ lưu trên máy (localStorage), không đưa lên repo công khai và không đồng bộ.
+const HOME_KEY = "hnag.home";
+const validLatLng = (la, lo) => Number.isFinite(la) && Number.isFinite(lo) && la > 8 && la < 24 && lo > 102 && lo < 110;
+let home = (() => {
+  const x = store.get(HOME_KEY, null);
+  return x && validLatLng(x.lat, x.lng) ? { lat: x.lat, lng: x.lng } : null;
+})();
+
+/** Khoảng cách đường chim bay (km). null nếu chưa đặt nhà hoặc quán chưa có toạ độ. */
+function distKm(p) {
+  if (!home || !validLatLng(p.lat, p.lng)) return null;
+  const R = 6371, t = Math.PI / 180;
+  const dLa = (p.lat - home.lat) * t, dLo = (p.lng - home.lng) * t;
+  const x = Math.sin(dLa / 2) ** 2 + Math.cos(home.lat * t) * Math.cos(p.lat * t) * Math.sin(dLo / 2) ** 2;
+  return 2 * R * Math.asin(Math.sqrt(x));
+}
+const byDistance = (a, b) => {
+  const da = distKm(a), db = distKm(b);
+  if (da == null && db == null) return 0;
+  if (da == null) return 1;
+  if (db == null) return -1;
+  return da - db;
+};
+
+/** Nhận "10.73, 106.73" hoặc link Google Maps bản đầy đủ (có @lat,lng hoặc !3d…!4d…). */
+function parseLatLng(text) {
+  const s = String(text || "").trim().slice(0, 2000);
+  const m = s.match(/!3d(-?\d+(?:\.\d+)?)!4d(-?\d+(?:\.\d+)?)/) ||
+    s.match(/@(-?\d+(?:\.\d+)?),\s*(-?\d+(?:\.\d+)?)/) ||
+    s.match(/^(-?\d+(?:\.\d+)?)\s*[,; ]\s*(-?\d+(?:\.\d+)?)$/);
+  if (!m) return null;
+  const lat = +m[1], lng = +m[2];
+  return validLatLng(lat, lng) ? { lat, lng } : null;
+}
+
+function setHome(h) {
+  // Làm tròn ~100 m: đủ để tính khoảng cách quán, không lưu vị trí chính xác của nhà.
+  home = h ? { lat: Math.round(h.lat * 1000) / 1000, lng: Math.round(h.lng * 1000) / 1000 } : null;
+  store.set(HOME_KEY, home);
+  renderPlaces();
+}
+
+function renderHome() {
+  $("#home-label").textContent = home
+    ? `🏠 Khu nhà: đã đặt (${home.lat.toFixed(3)}, ${home.lng.toFixed(3)})`
+    : "🏠 Chưa đặt khu nhà — đặt để xem khoảng cách";
+  $("#home-clear").classList.toggle("hidden", !home);
+}
 const mapsQuery = (p) => encodeURIComponent(`${p.name}, ${p.address}, TP. Hồ Chí Minh`);
 const mapsUrl = (p) => `https://www.google.com/maps/search/?api=1&query=${mapsQuery(p)}`;
 const dirUrl = (p) => `https://www.google.com/maps/dir/?api=1&destination=${mapsQuery(p)}`;
@@ -328,10 +378,12 @@ const fold = (s) => s.normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/đ/gi, "
 
 /** Quán bán đúng món trước, rồi tới quán cùng loại món. */
 function placesFor(dish, limit = 3) {
-  const exact = PLACES.filter((p) => p.dishes.includes(dish.name));
-  const sameType = PLACES.filter((p) => !exact.includes(p) && p.type === dish.type);
+  const near = (p) => { const d = distKm(p); return d == null || d <= 8; };
+  const exact = PLACES.filter((p) => p.dishes.includes(dish.name) && near(p)).sort(byDistance);
+  const sameType = PLACES.filter((p) => !exact.includes(p) && p.type === dish.type && near(p)).sort(byDistance);
   return [...exact, ...sameType].slice(0, limit);
 }
+const kmText = (d) => (d < 1 ? `${Math.round(d * 1000)} m` : `${d.toFixed(1)} km`);
 
 function extLink(href, label, cls = "btn ghost small-btn") {
   const safe = httpsOnly(href);
@@ -342,10 +394,11 @@ function placeCard(p) {
   return h("div", { class: "place" },
     h("div", { class: "place-head" },
       h("b", {}, p.name),
-      p.rating ? h("span", { class: "rating" }, `⭐ ${p.rating}`) : null),
+      p.g ? h("span", { class: "rating", title: `Google Maps, kiểm tra ngày ${PLACES_CHECKED}` }, `⭐ ${p.g.rating.toFixed(1)} · ${p.g.reviews.toLocaleString("vi-VN")}`) : null),
     h("p", { class: "addr" }, `📍 ${p.address}`),
+    home ? h("p", { class: "dist" }, distKm(p) != null ? `📏 ~${kmText(distKm(p))} từ nhà (đường chim bay)` : "📏 Chưa có toạ độ để tính khoảng cách") : null,
     h("p", { class: "meta" },
-      [p.hours ? `🕘 ${p.hours}` : null, p.parking ? PARKING_LABEL[p.parking] : "🚗 Chưa rõ chỗ đậu ô tô"].filter(Boolean).join("  ·  ")),
+      [p.hours ? `🕘 ${p.hours}` : null, p.parking ? PARKING_LABEL[p.parking] : null].filter(Boolean).join("  ·  ")),
     p.note ? h("p", { class: "pnote" }, p.note) : null,
     h("div", { class: "tags" }, p.dishes.map((d) => h("span", { class: "tag" }, `${iconOf(d)} ${d}`))),
     h("div", { class: "row" },
@@ -364,8 +417,8 @@ function renderMiniPlaces(dish) {
     ...list.map((p) => h("a", {
       class: "mini-place", href: dirUrl(p), target: "_blank", rel: "noopener noreferrer",
     },
-    h("span", { class: "mp-name" }, p.name, p.parking === "oto" ? " 🚗" : ""),
-    h("span", { class: "mp-addr" }, p.address),
+    h("span", { class: "mp-name" }, p.name, p.g ? ` · ⭐${p.g.rating.toFixed(1)}` : "", p.parking === "oto" ? " 🚗" : ""),
+    h("span", { class: "mp-addr" }, distKm(p) != null ? `~${kmText(distKm(p))} · ${p.address}` : p.address),
     h("span", { class: "mp-go", "aria-hidden": "true" }, "↗"))));
   box.classList.remove("hidden");
 }
@@ -390,14 +443,25 @@ function renderPlaceTypes() {
 
 function renderPlaces() {
   renderPlaceTypes();
+  // Chỉ hiện bộ lọc đậu ô tô khi có quán được xác nhận
+  $("#place-parking").closest("label").classList.toggle("hidden", !PLACES.some((p) => p.parking === "oto"));
+  renderHome();
   const q = fold(placeState.q.trim());
-  const list = PLACES.filter((p) =>
+  const base = PLACES.filter((p) =>
     (placeState.types.size === 0 || placeState.types.has(p.type)) &&
     (!placeState.parking || p.parking === "oto") &&
     (!q || fold([p.name, p.address, p.dishes.join(" ")].join(" ")).includes(q)));
+  let list = base;
+  let hiddenNoCoord = 0;
+  if (placeState.radius && home) {
+    list = base.filter((p) => { const d = distKm(p); if (d == null) hiddenNoCoord++; return d != null && d <= placeState.radius; });
+  }
+  list = [...list].sort(byDistance);
   const wrap = $("#places");
-  wrap.replaceChildren(...(list.length
-    ? list.map(placeCard)
+  const items = list.map(placeCard);
+  if (hiddenNoCoord) items.push(h("p", { class: "note" }, `Đã ẩn ${hiddenNoCoord} quán chưa có toạ độ. Chọn "Tất cả" để xem.`));
+  wrap.replaceChildren(...(list.length || hiddenNoCoord
+    ? items
     : [h("div", { class: "empty" }, h("b", {}, "🔍"), "Không có quán phù hợp.")]));
 }
 
@@ -654,6 +718,23 @@ $("#clear-history").addEventListener("click", () => {
 });
 
 $("#place-parking").addEventListener("change", (e) => { placeState.parking = e.target.checked; renderPlaces(); });
+$("#place-radius").addEventListener("change", (e) => { placeState.radius = Number(e.target.value) || 0; renderPlaces(); });
+$("#home-gps").addEventListener("click", () => {
+  if (!navigator.geolocation) { alert("Máy không hỗ trợ định vị."); return; }
+  $("#home-gps").disabled = true;
+  navigator.geolocation.getCurrentPosition(
+    (pos) => { $("#home-gps").disabled = false; setHome({ lat: pos.coords.latitude, lng: pos.coords.longitude }); },
+    () => { $("#home-gps").disabled = false; alert("Không lấy được vị trí. Hãy cho phép quyền vị trí, hoặc dùng nút Nhập."); },
+    { enableHighAccuracy: false, timeout: 15000, maximumAge: 600000 });
+});
+$("#home-edit").addEventListener("click", () => {
+  const v = prompt("Dán link Google Maps (bản đầy đủ, mở trong trình duyệt rồi chép) hoặc toạ độ dạng: 10.736, 106.737");
+  if (v == null) return;
+  const hl = parseLatLng(v);
+  if (!hl) { alert("Không đọc được toạ độ. Link rút gọn maps.app.goo.gl không đọc được — hãy mở link rồi chép địa chỉ đầy đủ, hoặc nhập toạ độ."); return; }
+  setHome(hl);
+});
+$("#home-clear").addEventListener("click", () => setHome(null));
 $("#place-q").addEventListener("input", (e) => { placeState.q = e.target.value.slice(0, 40); renderPlaces(); });
 
 const TAB_RENDER = { plan: () => renderPlan(), places: renderPlaces, list: renderList, history: renderHistory };

@@ -10,8 +10,9 @@ Web app (PWA) giúp 2 vợ chồng chọn món mỗi bữa. Không cần server,
 - **Thực đơn:** lên thực đơn theo **Ngày / Tuần / Tháng / Năm** (3 bữa/ngày). Không trùng món trong ngày, hạn chế lặp trong 3 ngày, ưu tiên đổi loại món. Chạm vào một bữa để đổi riêng món đó.
 - **Danh sách:** thêm / xoá món, chỉnh mức thích của từng người.
 - **Đã ăn:** lịch sử + thống kê 30 ngày.
-- **📍 Quán ăn:** 21 quán quanh Quận 7 cũ (~5 km quanh Phú Mỹ Hưng) — bún mắm, lẩu mắm, phở, hủ tiếu, bún riêu, bánh mì, bánh hỏi heo quay, cơm tấm, cơm niêu. Lọc theo loại món, tìm theo tên/đường, lọc **quán có chỗ đậu ô tô**. Mỗi quán có nút 🗺️ *Chỉ đường* và ⭐ *Đánh giá* (mở Google Maps) và 📰 *Nguồn*.
-  - Sau khi quay ra món, app gợi ý luôn 2–3 quán bán món đó.
+- **📍 Quán ăn:** 35 quán được đánh giá tốt trên Google trong 8 km — bún mắm, lẩu mắm, phở, hủ tiếu, bún riêu, bánh canh cua, bánh mì, bánh hỏi heo quay, bánh xèo, cơm tấm, cơm niêu. Lọc theo loại món, tìm theo tên/đường, lọc **bán kính 3 / 5 / 8 km**. Mỗi quán có nút 🗺️ *Chỉ đường*, ⭐ *Đánh giá* (mở Google Maps) và 📰 *Nguồn*.
+  - **Khoảng cách từ nhà:** đặt "khu nhà" bằng 📍 *Định vị* hoặc ✏️ *Nhập* (link Google Maps bản đầy đủ / toạ độ). Quán được xếp từ gần đến xa, ghi "~2.7 km" (đường chim bay).
+  - Sau khi quay ra món, app gợi ý luôn 2–3 quán gần nhất bán món đó (bỏ quán xa hơn 8 km).
 - **🔄 Đồng bộ 2 điện thoại** qua Firebase (miễn phí), hoặc **sao lưu bằng file** (không cần tài khoản).
 - Cài lên màn hình điện thoại như app thật, dùng được offline, hỗ trợ dark mode.
 
@@ -33,15 +34,17 @@ Mở http://localhost:5173
 
 ## Sửa dữ liệu
 - Món mặc định: `DEFAULT_DISHES` trong [`data.js`](data.js). Kho món gợi ý: `EXTRA_DISHES`.
-- Quán ăn: [`places.js`](places.js). Trường `dishes` phải trùng tên món trong `data.js` để gợi ý quán theo món; `parking: "oto"` chỉ đặt khi có nguồn xác nhận.
+- Quán ăn: [`places.js`](places.js). Trường `dishes` phải trùng tên món trong `data.js` để gợi ý quán theo món; `g` là ⭐/lượt đánh giá Google; `parking: "oto"` chỉ đặt khi có nguồn xác nhận; `lat`/`lng` lấy từ đúng trang quán trên Google Maps.
 - Mỗi lần cập nhật code, tăng `VERSION` trong [`sw.js`](sw.js) để điện thoại tải bản mới.
 
 ## Về dữ liệu quán ăn
-- Tổng hợp ngày 10/11/2026 từ Foody, trang của quán và các bài review. Chỉ giữ quán có địa chỉ rõ ràng; bỏ những quán mà các nguồn ghi địa chỉ khác nhau.
-- **Điểm số** (Foody x/10, Google x/5) là con số nguồn đã ghi — **không phải điểm Google hiện tại**. Bấm ⭐ *Đánh giá* để đọc review thật, mới nhất trên Google Maps.
-- Link Google Maps tạo từ *tên + địa chỉ* (không dùng toạ độ đoán), nên luôn mở đúng nơi Google tìm thấy.
-- Chỗ đậu ô tô: chỉ 2 quán có nguồn xác nhận (Lẩu Mắm Bà Dú – SC VivoCity, Cơm Niêu Cuội). Các quán khác ghi "Chưa rõ".
-- Từ 7/2025 TP.HCM bỏ cấp quận; địa chỉ vẫn ghi "Quận 7" cho dễ nhận, Google Maps vẫn hiểu.
+- **35 quán trong bán kính 8 km** quanh khu nhà (Quận 7, Quận 4, Quận 1, Quận 3, Quận 5, Quận 10), kiểm tra trực tiếp trên Google Maps ngày 10/11/2026.
+- **Tiêu chí giữ quán:** đang mở cửa · ⭐ ≥ 4.0 và ≥ 100 lượt đánh giá Google (quán mới thêm: ⭐ ≥ 4.2 và ≥ 150). Bỏ quán 4.9–5.0⭐ mà quá ít đánh giá (dễ là đánh giá ảo).
+- Lần kiểm tra này đã **loại 22 quán** của bản trước: 5 quán đã đóng cửa vĩnh viễn (Lẩu Mắm Bà Dú, Tiệm ăn Bà Diên, Bánh Mì Chảo Ngọc Xíu, Lẩu Mắm Cô 7 Bạc Liêu, Bánh Canh Bến Có), quán chưa có hoặc quá ít đánh giá, quán dưới 4.0⭐, và quán không tìm thấy trên Google Maps.
+- App hiện **⭐ số sao · số lượt đánh giá** của Google tại ngày kiểm tra. Con số này thay đổi theo thời gian — bấm ⭐ *Đánh giá* để xem bản mới nhất.
+- Toạ độ lấy từ đúng trang quán trên Google Maps; khoảng cách là đường chim bay.
+- **Vị trí nhà không nằm trong code** (repo và trang web là công khai). Nó chỉ lưu trên từng điện thoại, làm tròn ~100 m, không đồng bộ lên mây.
+- Chưa có quán nào được nguồn xác nhận chỗ đậu ô tô, nên bộ lọc 🚗 tạm ẩn.
 
 ## Bật đồng bộ online (Firebase, miễn phí)
 Làm **1 lần** bởi chủ repo (khoảng 10 phút):

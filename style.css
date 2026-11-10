@@ -260,3 +260,10 @@ nav button.on span { font-weight: 700; }
 .sync-panel .row { margin-top: 12px; }
 #sync-on .row, #tab-sync .card > .row { margin-top: 12px; }
 nav button span { white-space: nowrap; }
+
+/* ---------- Home & distance ---------- */
+.home-row { background: var(--bg); border-radius: 14px; padding: 10px; margin-bottom: 10px; }
+.home-label { display: block; font-size: .88rem; font-weight: 600; margin-bottom: 8px; }
+.home-row .row { flex-wrap: wrap; }
+.place .dist { margin: 0 0 2px; font-size: .84rem; font-weight: 600; color: var(--accent-ink); }
+.toggle select { font: inherit; padding: 6px 8px; border-radius: 10px; border: 1.5px solid var(--line); background: var(--bg); color: var(--text); }

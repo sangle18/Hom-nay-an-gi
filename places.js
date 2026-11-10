@@ -1,148 +1,48 @@
-// Quán ăn quanh Quận 7 cũ (khu Phú Mỹ Hưng, bán kính khoảng 5 km).
-// Dữ liệu tổng hợp ngày 10/11/2026 từ Foody, trang của quán và các bài review.
-// - rating: điểm do nguồn ghi, KHÔNG phải điểm Google hiện tại. Xem đánh giá mới nhất bằng nút Google Maps.
-// - parking: "oto" = nguồn ghi có chỗ đậu ô tô; "xe" = có bãi giữ xe (chưa rõ ô tô); null = chưa có thông tin.
-// - dishes: tên món khớp với data.js, để gợi ý quán theo món.
-// Giờ mở cửa / giá có thể đã đổi — nên gọi hoặc xem Google Maps trước khi đi.
-
+// Quán ăn trong bán kính 8 km quanh khu nhà (Quận 7, Quận 4, Quận 1, Quận 3, Quận 5, Quận 10).
+// Kiểm tra trên Google Maps ngày 10/11/2026. Tiêu chí giữ quán:
+//   - đang mở cửa (bỏ quán "Permanently closed"),
+//   - ≥ 4.0★ và ≥ 100 lượt đánh giá Google (quán mới thêm: ≥ 4.2★ và ≥ 150),
+//   - toạ độ lấy từ đúng trang quán trên Google Maps.
+// g: { rating, reviews } = số sao và số lượt đánh giá Google tại ngày kiểm tra (sẽ thay đổi theo thời gian).
+// source: bài review/nguồn gốc (nếu có); null = chỉ có dữ liệu Google Maps.
+// parking: "oto" | "xe" | null — chỉ đặt khi có nguồn xác nhận.
+const PLACES_CHECKED = "10/11/2026";
 const PLACES = [
-  // ---------- Bún mắm / Lẩu mắm ----------
-  {
-    name: "Bún Mắm Cẩm Tú", address: "1703A Huỳnh Tấn Phát, Quận 7",
-    type: "Bún", dishes: ["Bún mắm"], hours: "08:00–21:00",
-    rating: "Foody 8.0/10", note: "Quán lâu đời, vị bún mắm miền Nam.",
-    parking: null, source: "https://www.foody.vn/ho-chi-minh/bun-mam-cam-tu/binh-luan-509006",
-  },
-  {
-    name: "Bún Mắm Lẩu Mắm Cô Tư", address: "79 Phạm Hữu Lầu, P. Phú Mỹ, Quận 7",
-    type: "Bún", dishes: ["Bún mắm", "Lẩu mắm"], hours: "09:00–22:00",
-    rating: null, note: "Bún mắm và lẩu mắm.",
-    parking: "xe", source: "https://www.foody.vn/ho-chi-minh/bun-mam-lau-mam-co-tu-bun-mam",
-  },
-  {
-    name: "Lẩu Mắm Bà Diên", address: "45 Đường Số 4, P. Phú Mỹ, Quận 7",
-    type: "Lẩu", dishes: ["Lẩu mắm"], hours: null,
-    rating: null, note: "Món miền Nam, lẩu mắm.",
-    parking: null, source: "https://www.foody.vn/ho-chi-minh/lau-mam-ba-dien-45-duong-so-4",
-  },
-  {
-    name: "Lẩu Mắm Bà Dú (SC VivoCity)", address: "SC VivoCity, 1058 Nguyễn Văn Linh, Quận 7",
-    type: "Lẩu", dishes: ["Lẩu mắm"], hours: "10:30–22:30",
-    rating: null, note: "Trong trung tâm thương mại. Các nguồn ghi địa chỉ chưa thống nhất — nên gọi trước.",
-    parking: "oto", source: "https://diadiem247.com/tp-ho-chi-minh/lau-mam-ba-du-sc-vivocity-quan-7-l117958.html",
-  },
-
-  // ---------- Phở ----------
-  {
-    name: "Phở Xích", address: "4-1A Đường P, Mỹ Cảnh, Phú Mỹ Hưng, Quận 7",
-    type: "Phở", dishes: ["Phở gà", "Phở bò"], hours: "06:00–14:00, 17:00–21:00",
-    rating: null, note: "Phở gà kiểu Hà Nội, sợi mỏng, nước dùng trong.",
-    parking: null, source: "https://www.foody.vn/ho-chi-minh/pho-xich",
-  },
-  {
-    name: "Phở SOL", address: "53 Nguyễn Đức Cảnh, Mỹ Khánh 4, Phú Mỹ Hưng, Quận 7",
-    type: "Phở", dishes: ["Phở bò"], hours: null,
-    rating: null, note: "Phở Hà Nội. Có thêm chi nhánh 01 Phố Tiểu Nam, Cảnh Viên 1.",
-    parking: null, source: "https://phosol.vn/pho-ngon-quan-7-huong-vi-ha-noi-giua-long-phu-my-hung-tai-pho-sol/",
-  },
-
-  // ---------- Hủ tiếu ----------
-  {
-    name: "Minh Quán – Hủ Tiếu Nam Vang", address: "77 Hà Huy Tập, P. Tân Phong, Quận 7",
-    type: "Bún", dishes: ["Hủ tiếu Nam Vang"], hours: null,
-    rating: null, note: "Nước lèo trong, ngọt thanh; quán rộng, có khu ngoài trời. Khoảng 30–60k.",
-    parking: null, source: "https://ghiensaigon.com/minh-quan-hu-tieu-nam-vang/",
-  },
-  {
-    name: "Hòa – Hủ Tiếu Nam Vang", address: "87 Nguyễn Thị Thập, P. Tân Hưng, Quận 7",
-    type: "Bún", dishes: ["Hủ tiếu Nam Vang"], hours: null,
-    rating: "Foody 7.4/10 (chất lượng 9.0)", note: "Hủ tiếu khô thập cẩm.",
-    parking: null, source: "https://www.foody.vn/ho-chi-minh/hoa-hu-tieu-nam-vang",
-  },
-  {
-    name: "Hủ Tiếu Nam Vang Huỳnh Gia", address: "593 Trần Xuân Soạn, Quận 7",
-    type: "Bún", dishes: ["Hủ tiếu Nam Vang"], hours: null,
-    rating: "Foody 8.0/10", note: "Giá hợp lý, sạch sẽ, phần ăn nhiều.",
-    parking: null, source: "https://www.foody.vn/ho-chi-minh/hu-tieu-nam-vang-huynh-gia",
-  },
-
-  // ---------- Bún riêu ----------
-  {
-    name: "Bún Riêu Cua Đồng – Cô Ba Nguyệt", address: "178/14 Nguyễn Văn Linh, P. Tân Thuận Tây, Quận 7",
-    type: "Bún", dishes: ["Bún riêu cua"], hours: "07:00–21:00",
-    rating: null, note: "Bún riêu cua đồng.",
-    parking: null, source: "https://www.foody.vn/ho-chi-minh/bun-rieu-cua-dong-co-ba-nguyet",
-  },
-  {
-    name: "Bún Riêu Cua Minh Châu", address: "142/47 Nguyễn Thị Thập, P. Bình Thuận, Quận 7",
-    type: "Bún", dishes: ["Bún riêu cua"], hours: "07:00–21:00",
-    rating: null, note: "Trong hẻm.",
-    parking: null, source: "https://www.foody.vn/ho-chi-minh/bun-rieu-cua-minh-chau-nguyen-thi-thap",
-  },
-  {
-    name: "165 – Quán Bún Riêu", address: "165 Đường Số 79, P. Tân Quy, Quận 7",
-    type: "Bún", dishes: ["Bún riêu cua"], hours: null,
-    rating: null, note: "Bình dân, khoảng 20–23k.",
-    parking: null, source: "https://www.foody.vn/ho-chi-minh/165-quan-bun-rieu/thuc-don",
-  },
-
-  // ---------- Bánh mì / Bánh hỏi ----------
-  {
-    name: "Ghiền Món Việt – Bánh Hỏi & Heo Quay", address: "39/35 Bùi Văn Ba, P. Tân Thuận Đông, Quận 7",
-    type: "Bánh", dishes: ["Bánh hỏi heo quay"], hours: null,
-    rating: null, note: "Heo quay ba rọi rút sườn, bánh hỏi ăn kèm rau thơm.",
-    parking: null, source: "https://www.foody.vn/ho-chi-minh/ghien-mon-viet-banh-hoi-heo-quay-bui-van-ba",
-  },
-  {
-    name: "Xích Ký – Bánh Mì & Bánh Hỏi Heo Quay", address: "285 Lê Văn Lương, P. Tân Hưng, Quận 7",
-    type: "Bánh", dishes: ["Bánh hỏi heo quay", "Bánh mì thịt"], hours: "05:00–10:00 (chỉ buổi sáng)",
-    rating: null, note: "Bán buổi sáng.",
-    parking: null, source: "https://www.foody.vn/ho-chi-minh/xich-ky-banh-mi-banh-hoi-heo-quay-le-van-luong",
-  },
-  {
-    name: "Bánh Mì Bánh Hỏi Heo Quay Thị Nở", address: "1543 Huỳnh Tấn Phát, P. Phú Mỹ, Quận 7",
-    type: "Bánh mì", dishes: ["Bánh mì thịt", "Bánh hỏi heo quay"], hours: null,
-    rating: null, note: "Bánh mì heo quay.",
-    parking: null, source: "https://bestbanhmivietnam.com/cities/ho-chi-minh-city/restaurants/ho-chi-minh-city-banh-mi-banh-hoi-heo-quay-thi-no",
-  },
-  {
-    name: "Bánh Mì Ông Hưng", address: "458 Phạm Thái Bường, Quận 7",
-    type: "Bánh mì", dishes: ["Bánh mì thịt"], hours: null,
-    rating: null, note: "Thương hiệu có nhiều chi nhánh ở Quận 7.",
-    parking: null, source: "https://mytour.vn/vi/blog/bai-viet/top-8-quan-banh-mi-ngon-nhat-quan-7-tp-hcm.html",
-  },
-  {
-    name: "Bánh Mì Chảo Ngọc Xíu", address: "220 Lâm Văn Bền, Quận 7",
-    type: "Bánh mì", dishes: ["Bánh mì chảo", "Hủ tiếu Nam Vang", "Bún riêu cua"], hours: null,
-    rating: "Google 4.5/5 (~508 đánh giá, theo bài tổng hợp)", note: "Bánh mì chảo, hủ tiếu chảo, bún riêu chảo.",
-    parking: null, source: "https://top10tphcm.com/top-quan-banh-mi-ngon-nhat-tai-quan-7-tphcm",
-  },
-
-  // ---------- Cơm ----------
-  {
-    name: "Cơm Tấm Phúc Lộc Thọ", address: "223 Nguyễn Thị Thập, Quận 7",
-    type: "Cơm", dishes: ["Cơm tấm sườn bì chả"], hours: null,
-    rating: null, note: "Hơn 15 năm, nổi bật sườn bì chả.",
-    parking: null, source: "https://www.bachhoaxanh.com/kinh-nghiem-hay/10-quan-com-tam-quan-7-ngon-nuc-tieng-ma-ban-nen-thu-mot-lan-1401427",
-  },
-  {
-    name: "Cơm Tấm Phạm Hữu Lầu", address: "86 Phạm Hữu Lầu, Quận 7",
-    type: "Cơm", dishes: ["Cơm tấm sườn bì chả"], hours: null,
-    rating: null, note: "Cơm tấm chuẩn vị, phục vụ nhanh.",
-    parking: null, source: "https://ghiensaigon.com/com-tam-pham-huu-lau/",
-  },
-  {
-    name: "Cơm Tấm Ngon", address: "3G Lâm Văn Bền, Quận 7",
-    type: "Cơm", dishes: ["Cơm tấm sườn bì chả"], hours: null,
-    rating: "Google 4.5/5 (theo bài tổng hợp)", note: "",
-    parking: null, source: "https://tripi.vn/blog/vi/kinh-nghiem-hay/10-quan-com-tam-ngon-nuc-tieng-tai-quan-7-ban-nhat-dinh-phai-thu-tripi",
-  },
-  {
-    name: "Cơm Niêu Cuội (Nam Quang 1)", address: "R1-40 Nam Quang 1, Phú Mỹ Hưng, Quận 7",
-    type: "Cơm", dishes: ["Cơm niêu", "Cơm nhà: cá kho tộ + canh chua", "Cơm nhà: cá lóc kho + canh bí"], hours: "07:00–22:00",
-    rating: null, note: "Cơm niêu cháy cạnh, món gia đình — hợp đi chung.",
-    parking: "oto", source: "https://pasgo.vn/blog/com-nieu-cuoi-quan-com-gia-dinh-quan-7-5803",
-  },
+  { name: "Quán Ăn Gia Đình Mái Lá", address: "5-7 Đường N4, Quận 7", lat: 10.7505532, lng: 106.725337, type: "Cơm", dishes: [], g: { rating: 4.2, reviews: 296 }, note: "Quán ăn gia đình món Việt, gần nhà.", hours: null, parking: null, source: null },
+  { name: "Cơm Tấm Phúc Lộc Thọ", address: "223 Nguyễn Thị Thập, Quận 7", lat: 10.7381018, lng: 106.7178421, type: "Cơm", dishes: ["Cơm tấm sườn bì chả"], g: { rating: 4.4, reviews: 1756 }, note: "Hơn 15 năm, nổi bật sườn bì chả.", hours: null, parking: null, source: "https://www.bachhoaxanh.com/kinh-nghiem-hay/10-quan-com-tam-quan-7-ngon-nuc-tieng-ma-ban-nen-thu-mot-lan-1401427" },
+  { name: "Phở Xích", address: "4-1A Đường P, Mỹ Cảnh, Phú Mỹ Hưng, Quận 7", lat: 10.7271169, lng: 106.7140237, type: "Phở", dishes: ["Phở gà", "Phở bò"], g: { rating: 4.2, reviews: 455 }, note: "Phở gà kiểu Hà Nội, sợi mỏng, nước dùng trong.", hours: "06:00–14:00, 17:00–21:00", parking: null, source: "https://www.foody.vn/ho-chi-minh/pho-xich" },
+  { name: "Bánh Xèo Hẹn Hò Miền Tây", address: "34L Đường Số 7L, Quận 7", lat: 10.7497274, lng: 106.716914, type: "Bánh", dishes: ["Bánh xèo"], g: { rating: 4.6, reviews: 309 }, note: "Bánh xèo miền Tây.", hours: null, parking: null, source: null },
+  { name: "Bánh Mì Chad", address: "94 Đường Số 25, Quận 7", lat: 10.7352818, lng: 106.7123265, type: "Bánh mì", dishes: ["Bánh mì thịt"], g: { rating: 4.4, reviews: 171 }, note: "", hours: null, parking: null, source: null },
+  { name: "Bún Riêu Cô Hương Béo", address: "76 Đường Số 79, Tân Quy, Quận 7", lat: 10.7402884, lng: 106.7096199, type: "Bún", dishes: ["Bún riêu cua"], g: { rating: 4.2, reviews: 645 }, note: "Bún riêu cua kiểu miền Nam.", hours: null, parking: null, source: "https://amthucbinhxuyen.com/post/tong-hop-12-quan-bun-rieu-tai-quan-7.p1008" },
+  { name: "Bún Mắm Cô Yến", address: "56 Đường Số 10, Tân Quy, Quận 7", lat: 10.7431015, lng: 106.710199, type: "Bún", dishes: ["Bún mắm"], g: { rating: 4.3, reviews: 227 }, note: "Nước lèo thơm, ngọt thanh từ xương và mắm cá sặc.", hours: null, parking: null, source: "https://floritaquan7.com/quan-bun-mam-ngon-o-quan-7/" },
+  { name: "Minh Quán – Hủ Tiếu Nam Vang", address: "77 Hà Huy Tập, Tân Phong, Quận 7", lat: 10.7262241, lng: 106.7095686, type: "Bún", dishes: ["Hủ tiếu Nam Vang"], g: { rating: 4.3, reviews: 365 }, note: "Nước lèo trong, ngọt thanh; quán rộng, có khu ngoài trời.", hours: null, parking: null, source: "https://ghiensaigon.com/minh-quan-hu-tieu-nam-vang/" },
+  { name: "Phở SOL", address: "53 Nguyễn Đức Cảnh, Mỹ Khánh 4, Phú Mỹ Hưng, Quận 7", lat: 10.726966, lng: 106.7088345, type: "Phở", dishes: ["Phở bò"], g: { rating: 4.4, reviews: 488 }, note: "Phở Hà Nội.", hours: null, parking: null, source: "https://phosol.vn/pho-ngon-quan-7-huong-vi-ha-noi-giua-long-phu-my-hung-tai-pho-sol/" },
+  { name: "Bún Mắm Út Gọ", address: "140 Đường Số 79, Tân Quy, Quận 7", lat: 10.7407784, lng: 106.7063146, type: "Bún", dishes: ["Bún mắm"], g: { rating: 4.6, reviews: 172 }, note: "Bún mắm miền Tây trong khu Tân Quy.", hours: null, parking: null, source: null },
+  { name: "Cơm Tấm 169", address: "169 Đường Số 79, Tân Quy, Quận 7", lat: 10.7407135, lng: 106.7054, type: "Cơm", dishes: ["Cơm tấm sườn bì chả"], g: { rating: 4.8, reviews: 344 }, note: "", hours: null, parking: null, source: null },
+  { name: "Bánh Mì Chảo Sumo", address: "529A Lê Văn Lương, Quận 7", lat: 10.7349163, lng: 106.7025648, type: "Bánh mì", dishes: ["Bánh mì chảo"], g: { rating: 4.9, reviews: 313 }, note: "", hours: null, parking: null, source: null },
+  { name: "Bánh Canh Cua Dì Bình", address: "28 Xóm Chiếu, Quận 4", lat: 10.759655, lng: 106.711526, type: "Bánh", dishes: ["Bánh canh cua"], g: { rating: 4.6, reviews: 404 }, note: "", hours: null, parking: null, source: null },
+  { name: "Hủ Tiếu Mỹ Tho Dì 9", address: "538/51 Đoàn Văn Bơ, Quận 4", lat: 10.7584953, lng: 106.7092556, type: "Bún", dishes: ["Hủ tiếu Mỹ Tho"], g: { rating: 4.3, reviews: 412 }, note: "Hủ tiếu Mỹ Tho trong hẻm.", hours: null, parking: null, source: null },
+  { name: "Cơm Niêu Thiên Lý", address: "74 Nguyễn Thị Thập, Quận 7", lat: 10.741221, lng: 106.6972631, type: "Cơm", dishes: ["Cơm niêu", "Cơm nhà: cá kho tộ + canh chua", "Cơm nhà: cá lóc kho + canh bí"], g: { rating: 4.7, reviews: 1441 }, note: "Cơm niêu, món gia đình — hợp đi chung.", hours: null, parking: null, source: null },
+  { name: "Ớt Xiêm Quán", address: "568 Vĩnh Khánh, Quận 4", lat: 10.7611663, lng: 106.7057009, type: "Cơm", dishes: ["Cơm tấm sườn bì chả"], g: { rating: 4.1, reviews: 179 }, note: "Trên phố ẩm thực Vĩnh Khánh.", hours: null, parking: null, source: null },
+  { name: "Bánh Xèo Bà Hai", address: "119 Lê Văn Linh, Quận 4", lat: 10.7624844, lng: 106.7062897, type: "Bánh", dishes: ["Bánh xèo"], g: { rating: 4.4, reviews: 156 }, note: "", hours: null, parking: null, source: null },
+  { name: "Bún Mắm 144 (Khánh Hội)", address: "144 Khánh Hội, Quận 4", lat: 10.7576041, lng: 106.7001643, type: "Bún", dishes: ["Bún mắm"], g: { rating: 4.1, reviews: 630 }, note: "Quán bún mắm lâu năm của Quận 4.", hours: null, parking: null, source: "https://mia.vn/cam-nang-du-lich/bun-mam-quan-4-16086" },
+  { name: "Cơm Tấm Hồng (Calmette)", address: "128 Đoàn Văn Bơ, Quận 4", lat: 10.7633879, lng: 106.7034802, type: "Cơm", dishes: ["Cơm tấm sườn bì chả"], g: { rating: 4.1, reviews: 1579 }, note: "Ngay dốc cầu Calmette, nổi tiếng cơm sườn buổi tối.", hours: "Buổi tối", parking: null, source: null },
+  { name: "Bún Đậu Mắm Tôm Chí Phèo (CN5)", address: "244 Khánh Hội, Quận 4", lat: 10.7593307, lng: 106.6988527, type: "Bún", dishes: ["Bún đậu mắm tôm"], g: { rating: 4.9, reviews: 550 }, note: "", hours: null, parking: null, source: null },
+  { name: "Hủ Tíu Chú Thành", address: "61 Phó Đức Chính, Quận 1", lat: 10.768464, lng: 106.700313, type: "Bún", dishes: [], g: { rating: 4.7, reviews: 283 }, note: "Quán hủ tíu.", hours: null, parking: null, source: null },
+  { name: "Cơm Tấm Tóp Mị", address: "126 Nguyễn Thái Bình, Quận 1", lat: 10.7682604, lng: 106.6985522, type: "Cơm", dishes: ["Cơm tấm sườn bì chả"], g: { rating: 4.9, reviews: 1490 }, note: "", hours: null, parking: null, source: null },
+  { name: "Bún Riêu Cua Ốc Phan Rang (BRICO)", address: "66 Nguyễn Thái Bình, Quận 1", lat: 10.7689839, lng: 106.6991841, type: "Bún", dishes: ["Bún riêu cua"], g: { rating: 4.5, reviews: 444 }, note: "Bún riêu cua ốc.", hours: null, parking: null, source: null },
+  { name: "Phở Phú Vương", address: "120 Nguyễn Thái Bình, Quận 1", lat: 10.7683844, lng: 106.6985582, type: "Phở", dishes: ["Phở bò"], g: { rating: 4.3, reviews: 3058 }, note: "Quán phở lâu năm ở Quận 1.", hours: null, parking: null, source: "https://mia.vn/cam-nang-du-lich/top-quan-pho-quan-1-16083" },
+  { name: "XÈO Restaurant", address: "44 Đặng Thị Nhu, Quận 1", lat: 10.7692464, lng: 106.697073, type: "Bánh", dishes: ["Bánh xèo"], g: { rating: 4.7, reviews: 710 }, note: "Nhà hàng, không gian đẹp.", hours: null, parking: null, source: null },
+  { name: "Cơm Tấm Đề Thám", address: "269 Đề Thám, Quận 1", lat: 10.7683809, lng: 106.6933654, type: "Cơm", dishes: ["Cơm tấm sườn bì chả"], g: { rating: 4.4, reviews: 837 }, note: "", hours: null, parking: null, source: null },
+  { name: "Bánh Canh Cua Ba Ba (Crab noodle Ba ba)", address: "84/6 Nguyễn Biểu, Quận 5", lat: 10.7551678, lng: 106.684582, type: "Bánh", dishes: ["Bánh canh cua"], g: { rating: 4.6, reviews: 1506 }, note: "", hours: null, parking: null, source: null },
+  { name: "Bánh Mì Huỳnh Hoa", address: "26 Lê Thị Riêng, Bến Thành, Quận 1", lat: 10.7713922, lng: 106.6927189, type: "Bánh mì", dishes: ["Bánh mì thịt"], g: { rating: 4.1, reviews: 7864 }, note: "Bánh mì nổi tiếng nhất Sài Gòn, nhân rất đầy. Thường phải xếp hàng.", hours: "06:00–22:00", parking: null, source: "https://banhmihuynhhoa.vn/" },
+  { name: "Phở Hiền", address: "269A Nguyễn Trãi, Quận 1", lat: 10.764155, lng: 106.687491, type: "Phở", dishes: ["Phở bò"], g: { rating: 4.2, reviews: 706 }, note: "Mở từ năm 1985.", hours: null, parking: null, source: "https://tripi.vn/blog/vi/kinh-nghiem-hay/9-quan-pho-lau-nam-tru-danh-tai-quan-1-ma-ban-khong-the-bo-qua-tripi" },
+  { name: "Lẩu Mắm Đèn Bão", address: "196/1 Nguyễn Trãi, Quận 1", lat: 10.767895, lng: 106.688581, type: "Lẩu", dishes: ["Lẩu mắm", "Bún mắm"], g: { rating: 4.9, reviews: 293 }, note: "Quán lẩu mắm chuyên, hợp đi buổi tối.", hours: null, parking: null, source: null },
+  { name: "Bún Riêu Huy Móm", address: "88 Tôn Thất Tùng, Quận 1", lat: 10.7704283, lng: 106.6883201, type: "Bún", dishes: ["Bún riêu cua"], g: { rating: 4.9, reviews: 598 }, note: "", hours: null, parking: null, source: null },
+  { name: "Bánh Canh Cua 14", address: "221 Trần Bình Trọng, Quận 5", lat: 10.759495, lng: 106.68017, type: "Bánh", dishes: ["Bánh canh cua"], g: { rating: 4.6, reviews: 3955 }, note: "Rất đông khách.", hours: null, parking: null, source: null },
+  { name: "Phúc Hải – Bánh Mì & Bánh Hỏi Heo Quay", address: "3 Nguyễn Thượng Hiền, Quận 3", lat: 10.7705847, lng: 106.6863612, type: "Bánh", dishes: ["Bánh hỏi heo quay", "Bánh mì thịt"], g: { rating: 4.3, reviews: 111 }, note: "Bánh hỏi heo quay, phá lấu, xá xíu. Quán bánh hỏi có nhiều đánh giá nhất trong vùng.", hours: null, parking: null, source: null },
+  { name: "Phở Cao Vân", address: "25 Mạc Đĩnh Chi, Đa Kao, Quận 1", lat: 10.7847433, lng: 106.6992982, type: "Phở", dishes: ["Phở bò"], g: { rating: 4.2, reviews: 1228 }, note: "Một trong những quán phở Bắc lâu đời nhất Sài Gòn.", hours: null, parking: null, source: "https://tripi.vn/blog/vi/kinh-nghiem-hay/9-quan-pho-lau-nam-tru-danh-tai-quan-1-ma-ban-khong-the-bo-qua-tripi" },
+  { name: "Lẩu Mắm Bún Mắm Cô 5 Đồng Tháp", address: "Lô K, chung cư Ngô Gia Tự, Quận 10", lat: 10.7635224, lng: 106.6725695, type: "Lẩu", dishes: ["Lẩu mắm", "Bún mắm"], g: { rating: 4.8, reviews: 187 }, note: "Vị miền Tây (Đồng Tháp), trong khu chung cư.", hours: null, parking: null, source: null },
 ];
 
 const PARKING_LABEL = { oto: "🚗 Có chỗ đậu ô tô", xe: "🅿️ Có bãi giữ xe" };

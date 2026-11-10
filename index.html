@@ -115,11 +115,27 @@
     <!-- ============ Tab: Quán ăn ============ -->
     <section id="tab-places" class="tab" aria-label="Quán ăn">
       <div class="card">
-        <span class="label">Quán quanh Quận 7 <em>(~5 km quanh Phú Mỹ Hưng)</em></span>
+        <span class="label">Quán quanh nhà <em>(trong 8 km)</em></span>
+        <div class="home-row">
+          <span id="home-label" class="home-label"></span>
+          <div class="row">
+            <button type="button" id="home-gps" class="btn ghost small-btn">📍 Định vị</button>
+            <button type="button" id="home-edit" class="btn ghost small-btn">✏️ Nhập</button>
+            <button type="button" id="home-clear" class="btn ghost small-btn hidden">✕ Xoá</button>
+          </div>
+        </div>
         <input id="place-q" class="search" type="search" placeholder="Tìm tên quán, món, đường…" maxlength="40" aria-label="Tìm quán">
         <div class="chips" id="place-types"></div>
         <label class="toggle"><input type="checkbox" id="place-parking"> 🚗 Chỉ quán có chỗ đậu ô tô</label>
-        <p class="note">Điểm số lấy từ nguồn ghi bên dưới, không phải điểm Google hiện tại. Bấm 🗺️ để xem đánh giá mới nhất và chỉ đường. Giờ mở cửa có thể đã đổi.</p>
+        <label class="toggle">📏 Bán kính
+          <select id="place-radius" aria-label="Bán kính">
+            <option value="0">Tất cả</option>
+            <option value="3">≤ 3 km</option>
+            <option value="5">≤ 5 km</option>
+            <option value="8">≤ 8 km</option>
+          </select>
+        </label>
+        <p class="note">Chỉ gồm quán đang mở cửa, ⭐ ≥ 4.0 và ≥ 100 lượt đánh giá trên Google (kiểm tra 10/11/2026). Số ⭐ · lượt đánh giá sẽ thay đổi theo thời gian — bấm "⭐ Đánh giá" để xem mới nhất.</p>
       </div>
       <div id="places"></div>
     </section>
