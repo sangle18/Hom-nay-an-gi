@@ -759,6 +759,22 @@ $("#today").textContent = new Date().toLocaleDateString("vi-VN", { weekday: "lon
 renderTypes();
 persist(); // lưu lại dữ liệu đã được làm sạch
 
+// ---------- Tự cập nhật khi có bản mới ----------
+// sw.js mới (VERSION đổi) được cài ngay (skipWaiting + clients.claim) → sự kiện controllerchange
+// → tải lại trang 1 lần để dùng code mới. Lần cài đầu tiên (chưa có controller) thì không tải lại.
 if ("serviceWorker" in navigator && window.isSecureContext) {
-  navigator.serviceWorker.register("sw.js").catch(() => {});
+  const hadController = !!navigator.serviceWorker.controller;
+  let reloading = false;
+  navigator.serviceWorker.addEventListener("controllerchange", () => {
+    if (!hadController || reloading) return;
+    reloading = true;
+    if (state.spinning) setTimeout(() => location.reload(), 2500); // đợi quay số xong
+    else location.reload();
+  });
+  navigator.serviceWorker.register("sw.js").then((reg) => {
+    // Kiểm tra bản mới mỗi khi mở lại app (iPhone hay giữ app chạy ngầm nhiều ngày)
+    document.addEventListener("visibilitychange", () => {
+      if (document.visibilityState === "visible") reg.update().catch(() => {});
+    });
+  }).catch(() => {});
 }
