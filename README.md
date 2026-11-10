@@ -47,7 +47,7 @@ Mở http://localhost:5173
 - Chưa có quán nào được nguồn xác nhận chỗ đậu ô tô, nên bộ lọc 🚗 tạm ẩn.
 
 ## Bật đồng bộ online (Firebase, miễn phí)
-Làm **1 lần** bởi chủ repo (khoảng 10 phút):
+**Đã bật** (project `hom-nay-an-gi-b2c79`, Firestore ở `asia-southeast1`, luật trong [`firestore.rules`](firestore.rules) đã publish). Các bước dưới đây để tham khảo nếu cần làm lại:
 1. Vào https://console.firebase.google.com → **Add project** (tắt Google Analytics cho gọn).
 2. **Build → Authentication → Get started → Sign-in method → Anonymous → Enable.**
 3. **Build → Firestore Database → Create database** → chọn vùng `asia-southeast1` → *Production mode*.

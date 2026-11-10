@@ -3,6 +3,6 @@
 // Web API key của Firebase là thông tin công khai theo thiết kế; dữ liệu được bảo vệ bằng Firestore Rules
 // và giới hạn key theo tên miền trong Google Cloud Console.
 const SYNC_CONFIG = {
-  apiKey: "",
-  projectId: "",
+  apiKey: "AIzaSyCij1a3uLK0IHkV2gCVjzINtu1XnGgvua4",
+  projectId: "hom-nay-an-gi-b2c79",
 };
