@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <!-- Bảo mật: chỉ cho phép tải code/style từ chính trang này (+ font Google) -->
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self'; manifest-src 'self'; worker-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self' https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://firestore.googleapis.com; manifest-src 'self'; worker-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
   <meta name="referrer" content="no-referrer">
   <title>Hôm nay ăn gì?</title>
   <meta name="description" content="Chọn món ăn mỗi bữa cho hai vợ chồng.">
@@ -28,7 +28,7 @@
         <p class="today" id="today"></p>
         <h1>Hôm nay ăn gì?</h1>
       </div>
-      <img src="icon.svg" alt="" class="logo" width="48" height="48">
+      <button type="button" id="open-sync" class="sync-btn" aria-label="Đồng bộ dữ liệu"><span id="sync-dot" class="dot"></span>🔄</button>
     </div>
     <div class="seg seg-glass" id="who" role="group" aria-label="Ai ăn">
       <button type="button" data-v="both">👫 Cả hai</button>
@@ -62,6 +62,7 @@
           <button type="button" id="reroll" class="btn ghost">🔄 Đổi món</button>
           <button type="button" id="accept" class="btn primary">✅ Chốt món</button>
         </div>
+        <div id="r-places" class="mini-places hidden"></div>
       </div>
 
       <button type="button" id="discover" class="btn outline">✨ Gợi ý món khác <small>(ngoài danh sách)</small></button>
@@ -111,6 +112,50 @@
       <button type="button" id="reset" class="btn link">Khôi phục danh sách mặc định</button>
     </section>
 
+    <!-- ============ Tab: Quán ăn ============ -->
+    <section id="tab-places" class="tab" aria-label="Quán ăn">
+      <div class="card">
+        <span class="label">Quán quanh Quận 7 <em>(~5 km quanh Phú Mỹ Hưng)</em></span>
+        <input id="place-q" class="search" type="search" placeholder="Tìm tên quán, món, đường…" maxlength="40" aria-label="Tìm quán">
+        <div class="chips" id="place-types"></div>
+        <label class="toggle"><input type="checkbox" id="place-parking"> 🚗 Chỉ quán có chỗ đậu ô tô</label>
+        <p class="note">Điểm số lấy từ nguồn ghi bên dưới, không phải điểm Google hiện tại. Bấm 🗺️ để xem đánh giá mới nhất và chỉ đường. Giờ mở cửa có thể đã đổi.</p>
+      </div>
+      <div id="places"></div>
+    </section>
+
+    <!-- ============ Tab: Đồng bộ ============ -->
+    <section id="tab-sync" class="tab" aria-label="Đồng bộ">
+      <div class="card">
+        <h2 class="sec-title">🔄 Đồng bộ 2 điện thoại</h2>
+        <p class="note left" id="sync-status">Đang kiểm tra…</p>
+        <div id="sync-off">
+          <button type="button" id="sync-create" class="btn primary wide">Tạo mã gia đình mới</button>
+          <form id="sync-join" class="add join" autocomplete="off">
+            <input id="sync-code-in" placeholder="…hoặc nhập mã từ máy kia" maxlength="40" aria-label="Mã gia đình" autocapitalize="off" spellcheck="false">
+            <button class="btn ghost">Kết nối</button>
+          </form>
+        </div>
+        <div id="sync-on" class="hidden">
+          <span class="label">Mã gia đình</span>
+          <div class="code-row"><code id="sync-code"></code><button type="button" id="sync-copy" class="btn ghost">📋 Chép</button></div>
+          <p class="note left">Nhập mã này trên điện thoại còn lại. Ai có mã đều xem và sửa được dữ liệu — đừng gửi cho người ngoài.</p>
+          <div class="row">
+            <button type="button" id="sync-now" class="btn primary">🔄 Đồng bộ ngay</button>
+            <button type="button" id="sync-leave" class="btn ghost">Ngắt kết nối</button>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <h2 class="sec-title">💾 Sao lưu bằng file</h2>
+        <p class="note left">Không cần mạng hay tài khoản: tải file về rồi gửi qua Zalo/AirDrop, máy kia bấm "Nhập file" để gộp dữ liệu.</p>
+        <div class="row">
+          <button type="button" id="backup-export" class="btn ghost">⬇️ Tải file</button>
+          <label class="btn ghost file-btn">⬆️ Nhập file<input type="file" id="backup-import" accept="application/json,.json" hidden></label>
+        </div>
+      </div>
+    </section>
+
     <!-- ============ Tab: Đã ăn ============ -->
     <section id="tab-history" class="tab" aria-label="Lịch sử">
       <div id="stats"></div>
@@ -122,11 +167,15 @@
   <nav aria-label="Điều hướng">
     <button type="button" data-tab="pick" class="on"><b>🎲</b><span>Hôm nay</span></button>
     <button type="button" data-tab="plan"><b>📅</b><span>Thực đơn</span></button>
+    <button type="button" data-tab="places"><b>📍</b><span>Quán ăn</span></button>
     <button type="button" data-tab="list"><b>📋</b><span>Danh sách</span></button>
     <button type="button" data-tab="history"><b>🕘</b><span>Đã ăn</span></button>
   </nav>
 
   <script src="data.js"></script>
+  <script src="places.js"></script>
+  <script src="sync-config.js"></script>
   <script src="app.js"></script>
+  <script src="sync.js"></script>
 </body>
 </html>

@@ -64,7 +64,8 @@ function cleanDish(d) {
   const type = TYPES.includes(d.type) ? d.type : "Khác";
   const meals = Array.isArray(d.meals) ? MEALS.filter((m) => d.meals.includes(m)) : [];
   const icon = str(d.icon, 8) || iconFor({ name, type });
-  return { name, type, icon, vo: like(d.vo), chong: like(d.chong), meals: meals.length ? meals : [...MEALS] };
+  const u = Number.isFinite(d.u) && d.u > 0 ? d.u : 0; // thời điểm sửa gần nhất (để đồng bộ)
+  return { name, type, icon, vo: like(d.vo), chong: like(d.chong), meals: meals.length ? meals : [...MEALS], u };
 }
 function cleanHistory(x) {
   if (!x || typeof x !== "object") return null;
@@ -78,7 +79,21 @@ function cleanPlan(p) {
     .filter((d) => d && /^\d{4}-\d{2}-\d{2}$/.test(d.d))
     .map((d) => ({ d: d.d, sang: str(d.sang, 60) || null, trua: str(d.trua, 60) || null, toi: str(d.toi, 60) || null }))
     .slice(0, 400);
-  return days.length ? { who: WHO.includes(p.who) ? p.who : "both", days } : null;
+  const u = Number.isFinite(p.u) && p.u > 0 ? p.u : 0;
+  return days.length ? { who: WHO.includes(p.who) ? p.who : "both", days, u } : null;
+}
+/** Dữ liệu phụ cho đồng bộ: món đã xoá (tombstone) và thời điểm xoá lịch sử. */
+function cleanMeta(m) {
+  const out = { deletedDishes: {}, historyClearedAt: 0 };
+  if (!m || typeof m !== "object") return out;
+  if (m.deletedDishes && typeof m.deletedDishes === "object") {
+    for (const [k, v] of Object.entries(m.deletedDishes).slice(0, 1000)) {
+      const key = str(k, 60).toLowerCase();
+      if (key && Number.isFinite(v) && v > 0) out.deletedDishes[key] = v;
+    }
+  }
+  if (Number.isFinite(m.historyClearedAt) && m.historyClearedAt > 0) out.historyClearedAt = m.historyClearedAt;
+  return out;
 }
 function dedupe(list) {
   const seen = new Set();
@@ -91,6 +106,7 @@ let history = (store.get("hnag.history", []) || []).map(cleanHistory).filter(Boo
 const rawPlans = store.get("hnag.plans", {}) || {};
 let plans = Object.fromEntries(Object.keys(PERIODS).map((p) => [p, cleanPlan(rawPlans[p])]));
 let prefs = store.get("hnag.prefs", {}) || {};
+let meta = cleanMeta(store.get("hnag.meta", {}));
 
 const state = {
   who: WHO.includes(prefs.who) ? prefs.who : "both",
@@ -104,11 +120,18 @@ const state = {
   spinning: false,
 };
 
-const save = () => {
+/** Ghi xuống máy (không kích hoạt đồng bộ). */
+const persist = () => {
   store.set("hnag.dishes", dishes);
   store.set("hnag.history", history);
   store.set("hnag.plans", plans);
+  store.set("hnag.meta", meta);
   store.set("hnag.prefs", { who: state.who, period: state.period });
+};
+/** Ghi xuống máy rồi hẹn đồng bộ lên mây (nếu đã bật). */
+const save = () => {
+  persist();
+  if (typeof scheduleSync === "function") scheduleSync();
 };
 
 function mealFromClock() {
@@ -189,6 +212,7 @@ async function spin(isReroll = false) {
     $("#r-name").textContent = "Hết món rồi!";
     $("#r-likes").textContent = note;
     $("#r-actions").classList.add("hidden");
+    $("#r-places").classList.add("hidden");
     state.current = null;
     return;
   }
@@ -198,6 +222,7 @@ async function spin(isReroll = false) {
   $("#spin").disabled = $("#reroll").disabled = $("#accept").disabled = true;
   card.classList.remove("landed");
   card.classList.add("spinning");
+  $("#r-places").classList.add("hidden");
   const reel = dishes.filter((d) => score(d) > 0);
   const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
   for (let i = 0, delay = 50; !reduce && i < 14; i++, delay *= 1.15) {
@@ -213,6 +238,7 @@ async function spin(isReroll = false) {
   $("#r-type").textContent = `${dish.type} · bữa ${MEAL_LABEL[state.meal].toLowerCase()} · ${WHO_LABEL[state.who]}`;
   $("#r-likes").textContent = likesText(dish);
   $("#r-actions").classList.remove("hidden");
+  renderMiniPlaces(dish);
   $("#hint").textContent = note;
   state.spinning = false;
   $("#spin").disabled = $("#reroll").disabled = $("#accept").disabled = false;
@@ -282,12 +308,97 @@ function nextDiscover() {
 function addDiscover() {
   const d = state.discover;
   if (!d || dishes.some((x) => x.name.toLowerCase() === d.name.toLowerCase())) return;
-  dishes.push(cleanDish(d));
+  dishes.push(cleanDish({ ...d, u: Date.now() }));
   save();
   renderTypes();
   $("#d-add").disabled = true;
   $("#d-add").textContent = "✓ Đã thêm";
   $("#hint").textContent = `Đã thêm ${d.icon} ${d.name} vào danh sách.`;
+}
+
+// =====================================================================
+// Quán ăn (places.js) — link Google Maps tạo từ tên + địa chỉ
+// =====================================================================
+const placeState = { types: new Set(), parking: false, q: "" };
+const mapsQuery = (p) => encodeURIComponent(`${p.name}, ${p.address}, TP. Hồ Chí Minh`);
+const mapsUrl = (p) => `https://www.google.com/maps/search/?api=1&query=${mapsQuery(p)}`;
+const dirUrl = (p) => `https://www.google.com/maps/dir/?api=1&destination=${mapsQuery(p)}`;
+const httpsOnly = (u) => (typeof u === "string" && /^https:\/\/[^\s"'<>]+$/.test(u) ? u : null);
+const fold = (s) => s.normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/đ/gi, "d").toLowerCase();
+
+/** Quán bán đúng món trước, rồi tới quán cùng loại món. */
+function placesFor(dish, limit = 3) {
+  const exact = PLACES.filter((p) => p.dishes.includes(dish.name));
+  const sameType = PLACES.filter((p) => !exact.includes(p) && p.type === dish.type);
+  return [...exact, ...sameType].slice(0, limit);
+}
+
+function extLink(href, label, cls = "btn ghost small-btn") {
+  const safe = httpsOnly(href);
+  return safe ? h("a", { class: cls, href: safe, target: "_blank", rel: "noopener noreferrer" }, label) : null;
+}
+
+function placeCard(p) {
+  return h("div", { class: "place" },
+    h("div", { class: "place-head" },
+      h("b", {}, p.name),
+      p.rating ? h("span", { class: "rating" }, `⭐ ${p.rating}`) : null),
+    h("p", { class: "addr" }, `📍 ${p.address}`),
+    h("p", { class: "meta" },
+      [p.hours ? `🕘 ${p.hours}` : null, p.parking ? PARKING_LABEL[p.parking] : "🚗 Chưa rõ chỗ đậu ô tô"].filter(Boolean).join("  ·  ")),
+    p.note ? h("p", { class: "pnote" }, p.note) : null,
+    h("div", { class: "tags" }, p.dishes.map((d) => h("span", { class: "tag" }, `${iconOf(d)} ${d}`))),
+    h("div", { class: "row" },
+      extLink(dirUrl(p), "🗺️ Chỉ đường", "btn primary small-btn"),
+      extLink(mapsUrl(p), "⭐ Đánh giá"),
+      extLink(p.source, "📰 Nguồn")));
+}
+
+function renderMiniPlaces(dish) {
+  const box = $("#r-places");
+  const list = placesFor(dish);
+  box.replaceChildren();
+  if (!list.length) { box.classList.add("hidden"); return; }
+  box.append(
+    h("p", { class: "mini-title" }, "📍 Ăn ở đâu quanh Quận 7?"),
+    ...list.map((p) => h("a", {
+      class: "mini-place", href: dirUrl(p), target: "_blank", rel: "noopener noreferrer",
+    },
+    h("span", { class: "mp-name" }, p.name, p.parking === "oto" ? " 🚗" : ""),
+    h("span", { class: "mp-addr" }, p.address),
+    h("span", { class: "mp-go", "aria-hidden": "true" }, "↗"))));
+  box.classList.remove("hidden");
+}
+
+function renderPlaceTypes() {
+  const wrap = $("#place-types");
+  if (wrap.childElementCount) return;
+  const used = TYPES.filter((t) => PLACES.some((p) => p.type === t));
+  for (const t of used) {
+    const b = h("button", {
+      type: "button", "aria-pressed": "false",
+      onclick: () => {
+        placeState.types.has(t) ? placeState.types.delete(t) : placeState.types.add(t);
+        b.classList.toggle("on");
+        b.setAttribute("aria-pressed", String(placeState.types.has(t)));
+        renderPlaces();
+      },
+    }, `${TYPE_ICON[t]} ${t}`);
+    wrap.append(b);
+  }
+}
+
+function renderPlaces() {
+  renderPlaceTypes();
+  const q = fold(placeState.q.trim());
+  const list = PLACES.filter((p) =>
+    (placeState.types.size === 0 || placeState.types.has(p.type)) &&
+    (!placeState.parking || p.parking === "oto") &&
+    (!q || fold([p.name, p.address, p.dishes.join(" ")].join(" ")).includes(q)));
+  const wrap = $("#places");
+  wrap.replaceChildren(...(list.length
+    ? list.map(placeCard)
+    : [h("div", { class: "empty" }, h("b", {}, "🔍"), "Không có quán phù hợp.")]));
 }
 
 // =====================================================================
@@ -320,7 +431,7 @@ function generatePlan(period, who) {
     }
     days.push(day);
   }
-  return { who, days };
+  return { who, days, u: Date.now() };
 }
 
 function rerollSlot(period, dayIndex, meal) {
@@ -332,6 +443,7 @@ function rerollSlot(period, dayIndex, meal) {
   const d = weightedPick(pool, (x) => score(x, plan.who) ** 2);
   if (!d) return;
   day[meal] = d.name;
+  plan.u = Date.now();
   save();
   renderPlan(`${dayIndex}-${meal}`);
 }
@@ -436,13 +548,14 @@ function renderList() {
         ["vo", "chong"].map((p) => h("button", {
           type: "button",
           title: `Mức thích của ${p === "vo" ? "vợ" : "chồng"}`,
-          onclick: () => { d[p] = (d[p] + 1) % 3; save(); renderList(); },
+          onclick: () => { d[p] = (d[p] + 1) % 3; d.u = Date.now(); save(); renderList(); },
         }, `${p === "vo" ? "👩" : "👨"}${LIKE_ICON[d[p]]}`)),
         h("button", {
           type: "button", class: "del", title: "Xoá món", "aria-label": `Xoá ${d.name}`,
           onclick: () => {
             if (!confirm(`Xoá "${d.name}"?`)) return;
             dishes = dishes.filter((x) => x !== d);
+            meta.deletedDishes[d.name.toLowerCase()] = Date.now();
             save(); renderList(); renderTypes();
           },
         }, "✕")))));
@@ -494,12 +607,12 @@ function bindSeg(el, get, set) {
 }
 
 bindSeg($("#who"), () => state.who, (v) => {
-  state.who = v; state.skipped.clear(); save();
+  state.who = v; state.skipped.clear(); persist();
   if ($("#tab-plan").classList.contains("active")) renderPlan();
   if (!$("#discover-card").classList.contains("hidden")) nextDiscover();
 });
 bindSeg($("#meal"), () => state.meal, (v) => { state.meal = v; state.skipped.clear(); });
-bindSeg($("#period"), () => state.period, (v) => { state.period = v; save(); renderPlan(); });
+bindSeg($("#period"), () => state.period, (v) => { state.period = v; persist(); renderPlan(); });
 
 $("#spin").addEventListener("click", () => spin(false));
 $("#reroll").addEventListener("click", () => spin(true));
@@ -523,32 +636,47 @@ $("#add-form").addEventListener("submit", (e) => {
   if (!name) return;
   if (dishes.some((d) => d.name.toLowerCase() === name.toLowerCase())) { alert("Món này có rồi!"); return; }
   const type = $("#add-type").value;
-  dishes.push(cleanDish({ name, type, vo: type === "Fast food" ? 0 : 1, chong: 1, meals: MEALS }));
+  dishes.push(cleanDish({ name, type, vo: type === "Fast food" ? 0 : 1, chong: 1, meals: MEALS, u: Date.now() }));
   $("#add-name").value = "";
   save(); renderList(); renderTypes();
 });
 $("#reset").addEventListener("click", () => {
   if (!confirm("Khôi phục danh sách món mặc định? Các món bạn thêm sẽ mất (lịch sử vẫn giữ).")) return;
-  dishes = DEFAULT_DISHES.map(cleanDish);
+  const now = Date.now();
+  const defaults = new Set(DEFAULT_DISHES.map((d) => d.name.toLowerCase()));
+  dishes.forEach((d) => { if (!defaults.has(d.name.toLowerCase())) meta.deletedDishes[d.name.toLowerCase()] = now; });
+  dishes = DEFAULT_DISHES.map((d) => cleanDish({ ...d, u: now }));
   save(); renderList(); renderTypes();
 });
 $("#clear-history").addEventListener("click", () => {
   if (!confirm("Xoá toàn bộ lịch sử đã ăn?")) return;
-  history = []; save(); renderHistory();
+  history = []; meta.historyClearedAt = Date.now(); save(); renderHistory();
 });
 
-document.querySelectorAll("nav button").forEach((b) => {
-  b.addEventListener("click", () => {
-    document.querySelectorAll("nav button").forEach((x) => x.classList.toggle("on", x === b));
-    document.querySelectorAll(".tab").forEach((t) => t.classList.toggle("active", t.id === `tab-${b.dataset.tab}`));
-    ({ plan: renderPlan, list: renderList, history: renderHistory })[b.dataset.tab]?.();
-    window.scrollTo({ top: 0 });
-  });
-});
+$("#place-parking").addEventListener("change", (e) => { placeState.parking = e.target.checked; renderPlaces(); });
+$("#place-q").addEventListener("input", (e) => { placeState.q = e.target.value.slice(0, 40); renderPlaces(); });
+
+const TAB_RENDER = { plan: () => renderPlan(), places: renderPlaces, list: renderList, history: renderHistory };
+function showTab(name) {
+  document.querySelectorAll("nav button").forEach((x) => x.classList.toggle("on", x.dataset.tab === name));
+  document.querySelectorAll(".tab").forEach((t) => t.classList.toggle("active", t.id === `tab-${name}`));
+  TAB_RENDER[name]?.();
+  if (name === "sync" && typeof renderSync === "function") renderSync();
+  window.scrollTo({ top: 0 });
+}
+document.querySelectorAll("nav button").forEach((b) => b.addEventListener("click", () => showTab(b.dataset.tab)));
+$("#open-sync").addEventListener("click", () => showTab("sync"));
+
+/** Vẽ lại tab đang mở — dùng sau khi đồng bộ kéo dữ liệu mới về. */
+function refreshUI() {
+  renderTypes();
+  const active = document.querySelector(".tab.active")?.id.replace("tab-", "");
+  if (active && active !== "pick") TAB_RENDER[active]?.();
+}
 
 $("#today").textContent = new Date().toLocaleDateString("vi-VN", { weekday: "long", day: "numeric", month: "long" });
 renderTypes();
-save(); // lưu lại dữ liệu đã được làm sạch
+persist(); // lưu lại dữ liệu đã được làm sạch
 
 if ("serviceWorker" in navigator && window.isSecureContext) {
   navigator.serviceWorker.register("sw.js").catch(() => {});

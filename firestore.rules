@@ -1,0 +1,26 @@
+rules_version = '2';
+// Luật bảo mật cho đồng bộ "Hôm nay ăn gì?".
+// - Phải đăng nhập (ẩn danh) mới đọc/ghi được.
+// - Chỉ "get" từng tài liệu theo mã — KHÔNG cho "list" để không ai liệt kê được mã của nhà khác.
+// - Mã phải đúng 24 ký tự [a-z0-9]; chỉ cho 2 trường, giới hạn kích thước; cấm xoá.
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /households/{code} {
+      function validCode() {
+        return code.matches('^[a-z0-9]{24}$');
+      }
+      function validData() {
+        return request.resource.data.keys().hasOnly(['data', 'updatedAt'])
+          && request.resource.data.data is string
+          && request.resource.data.data.size() < 900000
+          && request.resource.data.updatedAt is int;
+      }
+      allow get: if request.auth != null && validCode();
+      allow create, update: if request.auth != null && validCode() && validData();
+      allow list, delete: if false;
+    }
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
