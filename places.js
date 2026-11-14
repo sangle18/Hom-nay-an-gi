@@ -3,7 +3,8 @@
 //   - đang mở cửa (bỏ quán "Permanently closed"),
 //   - ≥ 4.0★ và ≥ 100 lượt đánh giá Google (quán mới thêm: ≥ 4.2★ và ≥ 150),
 //   - toạ độ lấy từ đúng trang quán trên Google Maps.
-// g: { rating, reviews } = số sao và số lượt đánh giá Google tại ngày kiểm tra (sẽ thay đổi theo thời gian).
+// g: { rating, reviews } = số sao và số lượt đánh giá Google tại ngày kiểm tra (sẽ thay đổi theo thời gian); null = chưa có đánh giá.
+// Ngoại lệ: quán gia đình tự yêu cầu thêm (ghi rõ trong note) có thể nằm ngoài tiêu chí trên.
 // source: bài review/nguồn gốc (nếu có); null = chỉ có dữ liệu Google Maps.
 // parking: "oto" | "xe" | null — chỉ đặt khi có nguồn xác nhận.
 const PLACES_CHECKED = "10/11/2026";
@@ -12,6 +13,9 @@ const PLACES = [
   { name: "Cơm Tấm Phúc Lộc Thọ", address: "223 Nguyễn Thị Thập, Quận 7", lat: 10.7381018, lng: 106.7178421, type: "Cơm", dishes: ["Cơm tấm sườn bì chả"], g: { rating: 4.4, reviews: 1756 }, note: "Hơn 15 năm, nổi bật sườn bì chả.", hours: null, parking: null, source: "https://www.bachhoaxanh.com/kinh-nghiem-hay/10-quan-com-tam-quan-7-ngon-nuc-tieng-ma-ban-nen-thu-mot-lan-1401427" },
   { name: "Phở Xích", address: "4-1A Đường P, Mỹ Cảnh, Phú Mỹ Hưng, Quận 7", lat: 10.7271169, lng: 106.7140237, type: "Phở", dishes: ["Phở gà", "Phở bò"], g: { rating: 4.2, reviews: 455 }, note: "Phở gà kiểu Hà Nội, sợi mỏng, nước dùng trong.", hours: "06:00–14:00, 17:00–21:00", parking: null, source: "https://www.foody.vn/ho-chi-minh/pho-xich" },
   { name: "Bánh Xèo Hẹn Hò Miền Tây", address: "34L Đường Số 7L, Quận 7", lat: 10.7497274, lng: 106.716914, type: "Bánh", dishes: ["Bánh xèo"], g: { rating: 4.6, reviews: 309 }, note: "Bánh xèo miền Tây.", hours: null, parking: null, source: null },
+  { name: "Bánh Mì Bông Mai", address: "195 Trần Xuân Soạn, Tân Thuận, Quận 7", lat: 10.7524149, lng: 106.7185689, type: "Bánh mì", dishes: ["Bánh mì thịt"], g: { rating: 4.4, reviews: 252 }, note: "Gia đình gợi ý. Mở đến 19:00 (Google Maps, 14/11/2026).", hours: "Đến 19:00", parking: null, source: null },
+  { name: "Bánh Mì Anh Trai (Lê Văn Lương)", address: "428B Lê Văn Lương, Quận 7", lat: 10.7376259, lng: 106.7030895, type: "Bánh mì", dishes: ["Bánh mì thịt"], g: { rating: 4.3, reviews: 171 }, note: "Gia đình gợi ý. Bánh mì & đồ uống; còn chi nhánh 179 Lâm Văn Bền (gần nhà hơn, 4.3★ · 69 đánh giá).", hours: null, parking: null, source: null },
+  { name: "Bánh Mì Tân Thời", address: "121 Âu Cơ, TP. Hồ Chí Minh", lat: 10.7713126, lng: 106.6500931, type: "Bánh mì", dishes: ["Bánh mì thịt"], g: null, note: "Gia đình gợi ý — ngoài bán kính 8 km và chưa có đánh giá Google (kiểm tra 14/11/2026), nên không tự gợi ý khi quay món.", hours: null, parking: null, source: null },
   { name: "Bánh Mì Chad", address: "94 Đường Số 25, Quận 7", lat: 10.7352818, lng: 106.7123265, type: "Bánh mì", dishes: ["Bánh mì thịt"], g: { rating: 4.4, reviews: 171 }, note: "", hours: null, parking: null, source: null },
   { name: "Bún Riêu Cô Hương Béo", address: "76 Đường Số 79, Tân Quy, Quận 7", lat: 10.7402884, lng: 106.7096199, type: "Bún", dishes: ["Bún riêu cua"], g: { rating: 4.2, reviews: 645 }, note: "Bún riêu cua kiểu miền Nam.", hours: null, parking: null, source: "https://amthucbinhxuyen.com/post/tong-hop-12-quan-bun-rieu-tai-quan-7.p1008" },
   { name: "Bún Mắm Cô Yến", address: "56 Đường Số 10, Tân Quy, Quận 7", lat: 10.7431015, lng: 106.710199, type: "Bún", dishes: ["Bún mắm"], g: { rating: 4.3, reviews: 227 }, note: "Nước lèo thơm, ngọt thanh từ xương và mắm cá sặc.", hours: null, parking: null, source: "https://floritaquan7.com/quan-bun-mam-ngon-o-quan-7/" },

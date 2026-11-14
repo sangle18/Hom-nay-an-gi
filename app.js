@@ -408,7 +408,7 @@ function placeCard(p) {
   return h("div", { class: "place" },
     h("div", { class: "place-head" },
       h("b", {}, p.name),
-      p.g ? h("span", { class: "rating", title: `Google Maps, kiểm tra ngày ${PLACES_CHECKED}` }, `⭐ ${p.g.rating.toFixed(1)} · ${p.g.reviews.toLocaleString("vi-VN")}`) : null),
+      p.g ? h("span", { class: "rating", title: `Google Maps, kiểm tra ngày ${PLACES_CHECKED}` }, `⭐ ${p.g.rating.toFixed(1)} · ${p.g.reviews.toLocaleString("vi-VN")}`) : h("span", { class: "rating none" }, "Chưa có đánh giá")),
     h("p", { class: "addr" }, `📍 ${p.address}`),
     home ? h("p", { class: "dist" }, distKm(p) != null ? `📏 ~${kmText(distKm(p))} từ nhà (đường chim bay)` : "📏 Chưa có toạ độ để tính khoảng cách") : null,
     h("p", { class: "meta" },
