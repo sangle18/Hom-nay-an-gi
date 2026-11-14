@@ -45,13 +45,26 @@ const DEFAULT_DISHES = [
   { name: "Gà rán", icon: "🍗", type: "Fast food", vo: 0, chong: 2, meals: LUNCH_DINNER },
   { name: "Burger", icon: "🍔", type: "Fast food", vo: 0, chong: 2, meals: LUNCH_DINNER },
   { name: "Pizza", icon: "🍕", type: "Fast food", vo: 0, chong: 1, meals: LUNCH_DINNER },
+
+  // Thêm ngày 14/11/2026 (v: 2) — app tự thêm các món này vào máy đã có dữ liệu cũ
+  { v: 2, name: "Mì sủi cảo", icon: "🥟", type: "Bún", vo: 2, chong: 1, meals: ALL },
+  { v: 2, name: "Hủ tiếu chay", icon: "🥬", type: "Bún", vo: 1, chong: 1, meals: ALL },
+  { v: 2, name: "Bún mọc", icon: "🍲", type: "Bún", vo: 2, chong: 1, meals: ["sang", "trua"] },
+  { v: 2, name: "Xôi", icon: "🍙", type: "Khác", vo: 1, chong: 1, meals: ["sang"] },
+  { v: 2, name: "Hủ tiếu gà", icon: "🐔", type: "Bún", vo: 2, chong: 1, meals: ALL },
+  { v: 2, name: "Bún cá thác lác", icon: "🐟", type: "Bún", vo: 2, chong: 1, meals: ["sang", "trua"] },
+  { v: 2, name: "Bò né", icon: "🍳", type: "Bánh mì", vo: 2, chong: 2, meals: ["sang"] },
+  { v: 2, name: "Bò kho", icon: "🥘", type: "Bánh mì", vo: 2, chong: 2, meals: ["sang", "trua"] },
+  { v: 2, name: "Hủ tiếu Cô 9", icon: "🍜", type: "Bún", vo: 2, chong: 1, meals: ALL },
 ];
+
+// Phiên bản danh sách món mặc định — tăng khi thêm món mới (đánh dấu món bằng v: <số>)
+const DEFAULTS_VERSION = 2;
 
 // Kho món "mới" — dùng cho nút "Gợi ý món khác" (chưa có trong danh sách)
 const EXTRA_DISHES = [
   { name: "Hủ tiếu Mỹ Tho", icon: "🍜", type: "Bún", vo: 2, chong: 1, meals: ALL, desc: "Sợi hủ tiếu dai, nước lèo ngọt xương, tôm thịt." },
   { name: "Bánh canh ghẹ", icon: "🦀", type: "Bánh", vo: 2, chong: 1, meals: ALL, desc: "Nước dùng sệt, ghẹ nguyên con chắc thịt." },
-  { name: "Bò kho bánh mì", icon: "🥖", type: "Bánh mì", vo: 2, chong: 2, meals: ["sang", "trua"], desc: "Bò kho sả quế, chấm bánh mì nóng giòn." },
   { name: "Cháo lòng", icon: "🥣", type: "Khác", vo: 1, chong: 1, meals: ["sang", "toi"], desc: "Cháo nóng với lòng heo, dồi, giá, hành phi." },
   { name: "Cháo cá lóc rau đắng", icon: "🐟", type: "Khác", vo: 2, chong: 1, meals: ["sang", "toi"], desc: "Món miền Tây thanh mát, rau đắng chấm nước mắm." },
   { name: "Gỏi cuốn", icon: "🥬", type: "Khác", vo: 2, chong: 1, meals: LUNCH_DINNER, desc: "Tôm thịt cuốn bánh tráng, chấm tương đậu." },
@@ -62,7 +75,6 @@ const EXTRA_DISHES = [
   { name: "Bún chả Hà Nội", icon: "🍢", type: "Bún", vo: 2, chong: 1, meals: LUNCH_DINNER, desc: "Chả nướng than hoa, nước chấm chua ngọt." },
   { name: "Bún đậu mắm tôm", icon: "🧆", type: "Bún", vo: 1, chong: 1, meals: LUNCH_DINNER, desc: "Đậu rán giòn, chả cốm, thịt luộc, mắm tôm." },
   { name: "Mì Quảng", icon: "🍜", type: "Bún", vo: 2, chong: 1, meals: ALL, desc: "Sợi mì vàng, ít nước, tôm thịt, bánh tráng mè." },
-  { name: "Bún mọc", icon: "🍲", type: "Bún", vo: 2, chong: 1, meals: ["sang", "trua"], desc: "Nước dùng trong, mọc dai, sườn non." },
   { name: "Bún cá rô đồng", icon: "🐟", type: "Bún", vo: 2, chong: 1, meals: ["sang", "trua"], desc: "Cá rô chiên giòn, nước dùng chua nhẹ." },
   { name: "Cơm chiên cá mặn", icon: "🍛", type: "Cơm", vo: 1, chong: 2, meals: LUNCH_DINNER, desc: "Cơm chiên tơi, cá mặn thơm, hành lá." },
   { name: "Cơm gà Hải Nam", icon: "🍗", type: "Cơm", vo: 1, chong: 2, meals: LUNCH_DINNER, desc: "Gà luộc mềm, cơm nấu nước gà, gừng tỏi." },

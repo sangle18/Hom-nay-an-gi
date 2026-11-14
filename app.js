@@ -108,6 +108,20 @@ let plans = Object.fromEntries(Object.keys(PERIODS).map((p) => [p, cleanPlan(raw
 let prefs = store.get("hnag.prefs", {}) || {};
 let meta = cleanMeta(store.get("hnag.meta", {}));
 
+// Máy đã có danh sách món cũ: tự thêm các món mặc định mới (đánh dấu v trong data.js),
+// trừ món người dùng đã chủ động xoá. Món thêm có u = bây giờ nên sẽ đồng bộ sang máy kia.
+(() => {
+  const seen = Number(store.get("hnag.defaultsVer", 1)) || 1;
+  if (seen >= DEFAULTS_VERSION) return;
+  const have = new Set(dishes.map((d) => d.name.toLowerCase()));
+  const now = Date.now();
+  for (const d of DEFAULT_DISHES) {
+    const k = d.name.toLowerCase();
+    if ((d.v || 1) > seen && !have.has(k) && !meta.deletedDishes[k]) dishes.push(cleanDish({ ...d, u: now }));
+  }
+  store.set("hnag.defaultsVer", DEFAULTS_VERSION);
+})();
+
 const state = {
   who: WHO.includes(prefs.who) ? prefs.who : "both",
   meal: mealFromClock(),
