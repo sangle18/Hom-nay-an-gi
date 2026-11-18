@@ -315,6 +315,7 @@ function nextDiscover() {
   $("#d-name").textContent = d.name;
   $("#d-desc").textContent = d.desc || "";
   $("#d-likes").textContent = likesText(d);
+  renderMiniPlaces(d, "#d-places");
   $("#d-add").disabled = false;
   $("#d-add").textContent = "➕ Thêm món";
 }
@@ -391,12 +392,14 @@ const httpsOnly = (u) => (typeof u === "string" && /^https:\/\/[^\s"'<>]+$/.test
 const fold = (s) => s.normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/đ/gi, "d").toLowerCase();
 
 /** Quán bán đúng món trước, rồi tới quán cùng loại món. */
+/** Chỉ quán bán ĐÚNG món đó (không lấy quán "cùng loại" — bánh xèo không thay được bánh hỏi). */
 function placesFor(dish, limit = 3) {
   const near = (p) => { const d = distKm(p); return d == null || d <= 8; };
-  const exact = PLACES.filter((p) => p.dishes.includes(dish.name) && near(p)).sort(byDistance);
-  const sameType = PLACES.filter((p) => !exact.includes(p) && p.type === dish.type && near(p)).sort(byDistance);
-  return [...exact, ...sameType].slice(0, limit);
+  return PLACES.filter((p) => p.dishes.includes(dish.name) && near(p)).sort(byDistance).slice(0, limit);
 }
+/** Link tìm món trên Google Maps khi danh sách chưa có quán bán món đó. */
+const searchDishUrl = (dish) =>
+  `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${dish.name} Quận 7, TP. Hồ Chí Minh`)}`;
 const kmText = (d) => (d < 1 ? `${Math.round(d * 1000)} m` : `${d.toFixed(1)} km`);
 
 function extLink(href, label, cls = "btn ghost small-btn") {
@@ -421,13 +424,22 @@ function placeCard(p) {
       extLink(p.source, "📰 Nguồn")));
 }
 
-function renderMiniPlaces(dish) {
-  const box = $("#r-places");
+function renderMiniPlaces(dish, boxSel = "#r-places") {
+  const box = $(boxSel);
   const list = placesFor(dish);
   box.replaceChildren();
-  if (!list.length) { box.classList.add("hidden"); return; }
+  box.classList.remove("hidden");
+  if (!list.length) {
+    box.append(
+      h("p", { class: "mini-title" }, "📍 Chưa có quán đã kiểm tra bán món này"),
+      h("a", { class: "mini-place", href: searchDishUrl(dish), target: "_blank", rel: "noopener noreferrer" },
+        h("span", { class: "mp-name" }, `🔎 Tìm "${dish.name}" trên Google Maps`),
+        h("span", { class: "mp-addr" }, "Xem quán và đánh giá quanh Quận 7"),
+        h("span", { class: "mp-go", "aria-hidden": "true" }, "↗")));
+    return;
+  }
   box.append(
-    h("p", { class: "mini-title" }, "📍 Ăn ở đâu quanh Quận 7?"),
+    h("p", { class: "mini-title" }, "📍 Ăn ở đâu quanh nhà?"),
     ...list.map((p) => h("a", {
       class: "mini-place", href: dirUrl(p), target: "_blank", rel: "noopener noreferrer",
     },
