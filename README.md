@@ -10,7 +10,7 @@ Web app (PWA) giúp 2 vợ chồng chọn món mỗi bữa. Không cần server,
 - **Thực đơn:** lên thực đơn theo **Ngày / Tuần / Tháng / Năm** (3 bữa/ngày). Không trùng món trong ngày, hạn chế lặp trong 3 ngày, ưu tiên đổi loại món. Chạm vào một bữa để đổi riêng món đó.
 - **Danh sách:** thêm / xoá món, chỉnh mức thích của từng người.
 - **Đã ăn:** lịch sử + thống kê 30 ngày.
-- **📍 Quán ăn:** 35 quán được đánh giá tốt trên Google trong 8 km — bún mắm, lẩu mắm, phở, hủ tiếu, bún riêu, bánh canh cua, bánh mì, bánh hỏi heo quay, bánh xèo, cơm tấm, cơm niêu. Lọc theo loại món, tìm theo tên/đường, lọc **bán kính 3 / 5 / 8 km**. Mỗi quán có nút 🗺️ *Chỉ đường*, ⭐ *Đánh giá* (mở Google Maps) và 📰 *Nguồn*.
+- **📍 Quán ăn:** 59 quán được đánh giá tốt trên Google trong 8 km — bún mắm, lẩu mắm, phở, hủ tiếu, bún riêu, bánh canh cua, bánh mì, bánh hỏi heo quay, bánh xèo, cơm tấm, cơm niêu. Lọc theo loại món, tìm theo tên/đường, lọc **bán kính 3 / 5 / 8 km**. Mỗi quán có nút 🗺️ *Chỉ đường*, ⭐ *Đánh giá* (mở Google Maps) và 📰 *Nguồn*.
   - **Khoảng cách từ nhà:** đặt "khu nhà" bằng 📍 *Định vị* hoặc ✏️ *Nhập* (link Google Maps bản đầy đủ / toạ độ). Quán được xếp từ gần đến xa, ghi "~2.7 km" (đường chim bay).
   - Sau khi quay ra món, app gợi ý luôn 2–3 quán gần nhất bán món đó (bỏ quán xa hơn 8 km).
 - **🔄 Đồng bộ 2 điện thoại** qua Firebase (miễn phí), hoặc **sao lưu bằng file** (không cần tài khoản).
@@ -38,7 +38,7 @@ Mở http://localhost:5173
 - Mỗi lần cập nhật code, tăng `VERSION` trong [`sw.js`](sw.js) để điện thoại tải bản mới.
 
 ## Về dữ liệu quán ăn
-- **35 quán trong bán kính 8 km** quanh khu nhà (Quận 7, Quận 4, Quận 1, Quận 3, Quận 5, Quận 10), kiểm tra trực tiếp trên Google Maps ngày 10/11/2026.
+- **59 quán trong bán kính 8 km** quanh khu nhà (Quận 7, Quận 4, Quận 1, Quận 3, Quận 5, Quận 10), kiểm tra trực tiếp trên Google Maps ngày 10/11/2026.
 - **Tiêu chí giữ quán:** đang mở cửa · ⭐ ≥ 4.0 và ≥ 100 lượt đánh giá Google (quán mới thêm: ⭐ ≥ 4.2 và ≥ 150). Bỏ quán 4.9–5.0⭐ mà quá ít đánh giá (dễ là đánh giá ảo).
 - Lần kiểm tra này đã **loại 22 quán** của bản trước: 5 quán đã đóng cửa vĩnh viễn (Lẩu Mắm Bà Dú, Tiệm ăn Bà Diên, Bánh Mì Chảo Ngọc Xíu, Lẩu Mắm Cô 7 Bạc Liêu, Bánh Canh Bến Có), quán chưa có hoặc quá ít đánh giá, quán dưới 4.0⭐, và quán không tìm thấy trên Google Maps.
 - App hiện **⭐ số sao · số lượt đánh giá** của Google tại ngày kiểm tra. Con số này thay đổi theo thời gian — bấm ⭐ *Đánh giá* để xem bản mới nhất.

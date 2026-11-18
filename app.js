@@ -253,6 +253,7 @@ async function spin(isReroll = false) {
   $("#r-likes").textContent = likesText(dish);
   $("#r-actions").classList.remove("hidden");
   renderMiniPlaces(dish);
+  requestAnimationFrame(() => revealInView(card));
   $("#hint").textContent = note;
   state.spinning = false;
   $("#spin").disabled = $("#reroll").disabled = $("#accept").disabled = false;
@@ -316,6 +317,7 @@ function nextDiscover() {
   $("#d-desc").textContent = d.desc || "";
   $("#d-likes").textContent = likesText(d);
   renderMiniPlaces(d, "#d-places");
+  requestAnimationFrame(() => revealInView(card));
   $("#d-add").disabled = false;
   $("#d-add").textContent = "➕ Thêm món";
 }
@@ -774,6 +776,46 @@ function showTab(name) {
 document.querySelectorAll("nav button").forEach((b) => b.addEventListener("click", () => showTab(b.dataset.tab)));
 $("#open-sync").addEventListener("click", () => showTab("sync"));
 
+// =====================================================================
+// Cuộn trên mobile: header thu gọn (giữ thanh Cả hai/Vợ/Chồng), nút lên đầu trang
+// =====================================================================
+const prefersReducedMotion = () => matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+/** Cuộn vừa đủ để thấy cả phần tử: không bị header dính phía trên hay thanh tab phía dưới che. */
+function revealInView(el) {
+  if (!el || el.classList.contains("hidden")) return;
+  const r = el.getBoundingClientRect();
+  const topLimit = ($(".hero").getBoundingClientRect().bottom || 0) + 8;
+  const bottomLimit = innerHeight - ($("nav").offsetHeight + 24);
+  let dy = 0;
+  if (r.bottom > bottomLimit) dy = Math.min(r.bottom - bottomLimit, r.top - topLimit);
+  else if (r.top < topLimit) dy = r.top - topLimit;
+  if (Math.abs(dy) > 4) window.scrollBy({ top: dy, behavior: prefersReducedMotion() ? "auto" : "smooth" });
+}
+
+/** Header dính ở đầu trang nhưng chỉ chừa vùng tai thỏ + thanh Cả hai/Vợ/Chồng. */
+function layoutStickyHero() {
+  const hero = $(".hero"), seg = $("#who");
+  const safeTop = parseFloat(getComputedStyle(hero).paddingTop) - 18; // padding = 18px + safe-area
+  const keep = Math.max(0, safeTop) + 10 + seg.offsetHeight + 16;
+  hero.style.setProperty("--hero-top", `${-(hero.offsetHeight - keep)}px`);
+}
+let scrollTick = false;
+function onScroll() {
+  if (scrollTick) return;
+  scrollTick = true;
+  requestAnimationFrame(() => {
+    scrollTick = false;
+    const hero = $(".hero");
+    const collapse = -parseFloat(hero.style.getPropertyValue("--hero-top") || 0);
+    hero.classList.toggle("stuck", scrollY > collapse - 4);
+    $("#to-top").classList.toggle("show", scrollY > 900);
+  });
+}
+addEventListener("scroll", onScroll, { passive: true });
+addEventListener("resize", () => { layoutStickyHero(); onScroll(); });
+$("#to-top").addEventListener("click", () => window.scrollTo({ top: 0, behavior: prefersReducedMotion() ? "auto" : "smooth" }));
+
 /** Vẽ lại tab đang mở — dùng sau khi đồng bộ kéo dữ liệu mới về. */
 function refreshUI() {
   renderTypes();
@@ -783,6 +825,9 @@ function refreshUI() {
 
 $("#today").textContent = new Date().toLocaleDateString("vi-VN", { weekday: "long", day: "numeric", month: "long" });
 renderTypes();
+layoutStickyHero();
+onScroll();
+document.fonts?.ready.then(() => { layoutStickyHero(); onScroll(); }); // font tải xong làm header cao/thấp khác
 persist(); // lưu lại dữ liệu đã được làm sạch
 
 // ---------- Tự cập nhật khi có bản mới ----------
