@@ -25,7 +25,7 @@ const PLACES = [
   { name: "Cơm Tấm 169", address: "169 Đường Số 79, Tân Quy, Quận 7", lat: 10.7407135, lng: 106.7054, type: "Cơm", dishes: ["Cơm tấm sườn bì chả"], g: { rating: 4.8, reviews: 344 }, note: "", hours: null, parking: null, source: null },
   { name: "Bánh Mì Chảo Sumo", address: "529A Lê Văn Lương, Quận 7", lat: 10.7349163, lng: 106.7025648, type: "Bánh mì", dishes: ["Bánh mì chảo"], g: { rating: 4.9, reviews: 313 }, note: "", hours: null, parking: null, source: null },
   { name: "Bánh Canh Cua Dì Bình", address: "28 Xóm Chiếu, Quận 4", lat: 10.759655, lng: 106.711526, type: "Bánh", dishes: ["Bánh canh cua"], g: { rating: 4.6, reviews: 404 }, note: "", hours: null, parking: null, source: null },
-  { name: "Hủ Tiếu Mỹ Tho Dì 9", address: "538/51 Đoàn Văn Bơ, Quận 4", lat: 10.7584953, lng: 106.7092556, type: "Bún", dishes: ["Hủ tiếu Mỹ Tho", "Hủ tiếu Cô 9"], g: { rating: 4.3, reviews: 412 }, note: "Hủ tiếu Mỹ Tho trong hẻm.", hours: null, parking: null, source: null },
+  { name: "Hủ Tiếu Mỹ Tho Dì 9", address: "538/51 Đoàn Văn Bơ, Quận 4", lat: 10.7584953, lng: 106.7092556, type: "Bún", dishes: ["Hủ tiếu Mỹ Tho"], g: { rating: 4.3, reviews: 412 }, note: "Hủ tiếu Mỹ Tho trong hẻm.", hours: null, parking: null, source: null },
   { name: "Cơm Niêu Thiên Lý", address: "74 Nguyễn Thị Thập, Quận 7", lat: 10.741221, lng: 106.6972631, type: "Cơm", dishes: ["Cơm niêu", "Cơm nhà: cá kho tộ + canh chua"], g: { rating: 4.7, reviews: 1441 }, note: "Cơm niêu, món gia đình — hợp đi chung.", hours: null, parking: null, source: null },
   { name: "Ớt Xiêm Quán", address: "568 Vĩnh Khánh, Quận 4", lat: 10.7611663, lng: 106.7057009, type: "Cơm", dishes: ["Cơm tấm sườn bì chả"], g: { rating: 4.1, reviews: 179 }, note: "Trên phố ẩm thực Vĩnh Khánh.", hours: null, parking: null, source: null },
   { name: "Bánh Xèo Bà Hai", address: "119 Lê Văn Linh, Quận 4", lat: 10.7624844, lng: 106.7062897, type: "Bánh", dishes: ["Bánh xèo"], g: { rating: 4.4, reviews: 156 }, note: "", hours: null, parking: null, source: null },
@@ -69,6 +69,8 @@ const PLACES = [
   { name: "Burger Meister Phú Mỹ Hưng", address: "75 Lê Văn Thiêm, Phú Mỹ Hưng, Quận 7", lat: 10.7308404, lng: 106.707277, type: "Fast food", dishes: ["Burger"], g: { rating: 4.7, reviews: 236 }, note: "", hours: null, parking: null, source: null },
   { name: "Pizza Hut Nguyễn Thị Thập", address: "453 Nguyễn Thị Thập, Quận 7", lat: 10.7386373, lng: 106.7105722, type: "Fast food", dishes: ["Pizza"], g: { rating: 4.9, reviews: 1100 }, note: "", hours: null, parking: null, source: null },
   { name: "Pizza Margherí Phú Mỹ Hưng", address: "Hưng Phước 4, Phú Mỹ Hưng, Quận 7", lat: 10.7297896, lng: 106.7077113, type: "Fast food", dishes: ["Pizza"], g: { rating: 4.7, reviews: 1819 }, note: "", hours: null, parking: null, source: null },
+  // ---- Gia đình gợi ý ----
+  { name: "Hủ Tiếu Cô Sáu", address: "17 Đường Số 9 (đường đôi), Quận 7", lat: 10.7468133, lng: 106.7092646, type: "Bún", dishes: ["Hủ tiếu Cô Sáu"], g: { rating: 5.0, reviews: 7 }, note: "Gia đình gợi ý. Ít đánh giá Google (7) nên là ngoại lệ.", hours: null, parking: null, source: null },
 ];
 
 const PARKING_LABEL = { oto: "🚗 Có chỗ đậu ô tô", xe: "🅿️ Có bãi giữ xe" };

@@ -55,8 +55,11 @@ const DEFAULT_DISHES = [
   { v: 2, name: "Bún cá thác lác", icon: "🐟", type: "Bún", vo: 2, chong: 1, meals: ["sang", "trua"] },
   { v: 2, name: "Bò né", icon: "🍳", type: "Bánh mì", vo: 2, chong: 2, meals: ["sang"] },
   { v: 2, name: "Bò kho", icon: "🥘", type: "Bánh mì", vo: 2, chong: 2, meals: ["sang", "trua"] },
-  { v: 2, name: "Hủ tiếu Cô 9", icon: "🍜", type: "Bún", vo: 2, chong: 1, meals: ALL },
+  { v: 2, name: "Hủ tiếu Cô Sáu", icon: "🍜", type: "Bún", vo: 2, chong: 1, meals: ALL },
 ];
+
+// Món đổi tên: app tự đổi trong danh sách, lịch sử, thực đơn đã lưu và dữ liệu đồng bộ.
+const DISH_RENAMES = { "Hủ tiếu Cô 9": "Hủ tiếu Cô Sáu" };
 
 // Phiên bản danh sách món mặc định — tăng khi thêm món mới (đánh dấu món bằng v: <số>)
 const DEFAULTS_VERSION = 2;

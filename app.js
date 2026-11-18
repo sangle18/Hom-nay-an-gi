@@ -122,6 +122,29 @@ let meta = cleanMeta(store.get("hnag.meta", {}));
   store.set("hnag.defaultsVer", DEFAULTS_VERSION);
 })();
 
+/** Đổi tên món (DISH_RENAMES trong data.js) trong danh sách, lịch sử và thực đơn. Trả true nếu có đổi. */
+function applyDishRenames(snap) {
+  let changed = false;
+  for (const [from, to] of Object.entries(DISH_RENAMES)) {
+    const old = snap.dishes.find((d) => d.name.toLowerCase() === from.toLowerCase());
+    if (old) {
+      if (!snap.dishes.some((d) => d.name.toLowerCase() === to.toLowerCase())) snap.dishes.push({ ...old, name: to });
+      snap.dishes = snap.dishes.filter((d) => d !== old);
+      changed = true;
+    }
+    for (const x of snap.history) if (x.name === from) { x.name = to; changed = true; }
+    for (const plan of Object.values(snap.plans || {})) {
+      if (!plan) continue;
+      for (const day of plan.days) for (const m of MEALS) if (day[m] === from) { day[m] = to; changed = true; }
+    }
+  }
+  return changed;
+}
+(() => {
+  const s = { dishes, history, plans };
+  if (applyDishRenames(s)) dishes = s.dishes;
+})();
+
 const state = {
   who: WHO.includes(prefs.who) ? prefs.who : "both",
   meal: mealFromClock(),

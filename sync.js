@@ -31,12 +31,14 @@ function snapshot() { return { v: 1, dishes, history, plans, meta }; }
 
 function cleanSnapshot(x) {
   if (!x || typeof x !== "object") return null;
-  return {
+  const snap = {
     dishes: dedupe((Array.isArray(x.dishes) ? x.dishes : []).slice(0, 500).map(cleanDish)),
     history: (Array.isArray(x.history) ? x.history : []).slice(-1000).map(cleanHistory).filter(Boolean),
     plans: Object.fromEntries(Object.keys(PERIODS).map((p) => [p, cleanPlan(x.plans && x.plans[p])])),
     meta: cleanMeta(x.meta),
   };
+  applyDishRenames(snap); // máy kia chưa cập nhật vẫn gửi tên cũ
+  return snap;
 }
 
 /**
